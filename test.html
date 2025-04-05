@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyGEMS - 生成AIで医療現場に温かみを</title>
+    <style>
+        :root {
+            /* 暖色系カラーパレットに変更 */
+            --primary: #ff7e5f;
+            --primary-dark: #e15a44;
+            --primary-light: #ffece6;
+            --secondary: #feb47b;
+            --secondary-dark: #e8915b;
+            --secondary-light: #fff4eb;
+            --accent: #f9c784;
+            --accent-dark: #e5a954;
+            --dark: #433a3f;
+            --gray-dark: #635d60;
+            --gray: #938e90;
+            --gray-light: #eeebec;
+            --light: #faf7f8;
+            --white: #ffffff;
+            --danger: #e74c3c;
+            --success: #27ae60;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5em;
+        }
+        
+        h1 {
+            font-size: 2.75rem;
+        }
+        
+        h2 {
+            font-size: 2.25rem;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        a:hover {
+            color: var(--primary-dark);
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(225, 90, 68, 0.2);
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(225, 90, 68, 0.25);
+        }
+        
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--primary);
+            border: 1px solid var(--primary-light);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        
+        .btn-accent {
+            background-color: var(--accent);
+            color: var(--dark);
+        }
+        
+        .btn-accent:hover {
+            background-color: var(--accent-dark);
+        }
+        
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+        
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(225, 90, 68, 0.1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .header-scrolled {
+            padding: 0.7rem 0;
+            background-color: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 5px 20px rgba(225, 90, 68, 0.15);
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            margin-right: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(225, 90, 68, 0.3);
+        }
+        
+        .logo-text {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            align-items: center;
+        }
+        
+        .nav-links li {
+            margin-left: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--gray-dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark);
+            cursor: pointer;
+        }
+        
+        /* Hero Section */
+        .hero {
+            padding: 10rem 0 6rem;
+            background: linear-gradient(135deg, #fff4eb 0%, #ffece6 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-text {
+            width: 50%;
+        }
+        
+        .hero-title {
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-title span {
+            display: block;
+            margin-top: 0.5rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .campaign-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(225, 90, 68, 0.08);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 2rem;
+        }
+        
+        .campaign-badge-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+        
+        .campaign-badge-text {
+            line-height: 1.3;
+        }
+        
+        .campaign-badge-title {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+        
+        .hero-image {
+            width: 45%;
+            position: relative;
+        }
+        
+        .hero-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(225, 90, 68, 0.1);
+            padding: 2rem;
+            border: 1px solid var(--gray-light);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-card-badge {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .hero-card-rating {
+            color: var(--accent);
+        }
+        
+        .hero-card-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .hero-card-description {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-card-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-card-feature {
+            display: flex;
+            align-items: center;
+        }
+        
+        .hero-card-feature-icon {
+            color: var(--success);
+            margin-right: 0.5rem;
+        }
+        
+        .hero-card-stats {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .hero-card-stats-icon {
+            margin-right: 0.75rem;
+        }
+        
+        .hero-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.4;
+            z-index: 1;
+        }
+        
+        .hero-blob-1 {
+            width: 200px;
+            height: 200px;
+            background-color: var(--primary-light);
+            top: -50px;
+            right: 10%;
+        }
+        
+        .hero-blob-2 {
+            width: 300px;
+            height: 300px;
+            background-color: rgba(254, 180, 123, 0.3);
+            bottom: -100px;
+            left: 10%;
+        }
+        
+        .hero-blob-3 {
+            width: 150px;
+            height: 150px;
+            background-color: rgba(249, 199, 132, 0.3);
+            top: 40%;
+            left: 20%;
+        }
+        
+        /* About Section */
+        .section {
+            padding: 6rem 0;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-subtitle {
+            display: inline-block;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+.section-title {
+            font-size: 2.25rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .section-description {
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--gray);
+        }
+        
+        .feature-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .feature-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(225, 90, 68, 0.05);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(225, 90, 68, 0.1);
+        }
+        
+        .feature-card-header {
+            height: 4px;
+        }
+        
+        .feature-card:nth-child(1) .feature-card-header {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+        }
+        
+        .feature-card:nth-child(2) .feature-card-header {
+            background: linear-gradient(to right, var(--secondary), var(--secondary-dark));
+        }
+        
+        .feature-card:nth-child(3) .feature-card-header {
+            background: linear-gradient(to right, var(--accent), var(--accent-dark));
+        }
+        
+        .feature-card-body {
+            padding: 2rem;
+        }
+        
+        .feature-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-card:nth-child(1) .feature-icon {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+        
+        .feature-card:nth-child(2) .feature-icon {
+            background-color: var(--secondary-light);
+            color: var(--secondary);
+        }
+        
+        .feature-card:nth-child(3) .feature-icon {
+            background-color: #fef3c7;
+            color: var(--accent);
+        }
+        
+        .feature-icon svg {
+            width: 1.75rem;
+            height: 1.75rem;
+        }
+        
+        .feature-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .feature-description {
+            color: var(--gray);
+        }
+        
+        /* Services Section */
+        .services {
+            background: linear-gradient(to bottom, var(--light) 0%, #fff4eb 100%);
+        }
+        
+        .service-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .service-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(225, 90, 68, 0.05);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(225, 90, 68, 0.15);
+        }
+        
+        .service-card-header {
+            padding: 1.5rem;
+        }
+        
+        .service-card:nth-child(1) .service-card-header {
+            background: linear-gradient(45deg, var(--primary-light), #ffe0d8);
+        }
+        
+        .service-card:nth-child(2) .service-card-header {
+            background: linear-gradient(45deg, var(--secondary-light), #ffe8d3);
+        }
+        
+        .service-card:nth-child(3) .service-card-header {
+            background: linear-gradient(45deg, #fef3c7, #fde9bc);
+        }
+        
+        .service-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .service-card:nth-child(1) .service-icon {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .service-card:nth-child(2) .service-icon {
+            background: linear-gradient(45deg, var(--secondary), var(--secondary-dark));
+            color: white;
+        }
+        
+        .service-card:nth-child(3) .service-icon {
+            background: linear-gradient(45deg, var(--accent), var(--accent-dark));
+            color: white;
+        }
+        
+        .service-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        
+        .service-title {
+            font-size: 1.25rem;
+            margin-bottom: 0;
+        }
+        
+        .service-card-body {
+            padding: 1.5rem;
+        }
+        
+        .service-description {
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+        
+        .service-detail {
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-light);
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .service-detail-label {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        .service-price {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .price-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .price-original {
+            color: var(--gray);
+            text-decoration: line-through;
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .price-current {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        
+        .price-discount {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        /* Process Section */
+        .process-steps {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .process-step {
+            display: flex;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .process-step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .process-step:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 3.5rem;
+            left: 1.5rem;
+            width: 2px;
+            height: calc(100% - 3rem);
+            background: linear-gradient(to bottom, var(--primary-light), var(--secondary-light));
+        }
+        
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            margin-right: 1.5rem;
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(225, 90, 68, 0.3);
+        }
+        
+        .step-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(225, 90, 68, 0.05);
+            flex-grow: 1;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .step-content:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 20px rgba(225, 90, 68, 0.1);
+        }
+        
+        .step-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-description {
+            color: var(--gray);
+            margin-bottom: 0;
+        }
+        
+        /* Testimonial Section */
+        .testimonial {
+            background: linear-gradient(to bottom, #fff4eb 0%, var(--light) 100%);
+        }
+        
+        .testimonial-card {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(225, 90, 68, 0.08);
+            padding: 2.5rem;
+            position: relative;
+        }
+        
+        .testimonial-content {
+            position: relative;
+            padding-left: 3rem;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: var(--gray-dark);
+        }
+        
+        .testimonial-content::before {
+            content: """;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 5rem;
+            line-height: 1;
+            color: var(--primary-light);
+            font-family: serif;
+            height: 3rem;
+            overflow: hidden;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+        }
+        
+        .author-avatar {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+            margin-right: 1rem;
+            overflow: hidden;
+        }
+        
+        .author-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .author-position {
+            color: var(--gray);
+        }
+        
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .cta-title {
+            color: white;
+        }
+        
+        .cta-banner {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+        
+        .cta-description {
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .btn-cta {
+            background-color: white;
+            color: var(--primary);
+            font-weight: 700;
+            padding: 1rem 2.5rem;
+        }
+        
+        .btn-cta:hover {
+            background-color: var(--gray-light);
+            color: var(--primary-dark);
+        }
+/* Contact Section */
+        .contact-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .contact-card {
+            background-color: #fff4eb;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .contact-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .contact-icon {
+            width: 4rem;
+            height: 4rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        
+        .contact-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        
+        .contact-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .contact-info {
+            color: var(--gray);
+        }
+        
+        .contact-form-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(225, 90, 68, 0.08);
+            overflow: hidden;
+        }
+        
+        .contact-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .contact-form-sidebar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem;
+        }
+        
+        .contact-form-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .contact-sidebar-description {
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        
+        .contact-feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .contact-feature-icon {
+            margin-right: 0.75rem;
+        }
+        
+        .contact-form {
+            padding: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-dark);
+        }
+        
+        .form-required {
+            color: var(--danger);
+            margin-left: 0.25rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-light);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.2);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            width: 100%;
+            padding: 0.75rem;
+            font-weight: 600;
+        }
+        
+        /* FAQ Section */
+        .faq {
+            background: linear-gradient(to bottom, var(--light) 0%, #fff4eb 100%);
+        }
+        
+        .faq-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 5px 15px rgba(225, 90, 68, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .faq-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(225, 90, 68, 0.1);
+        }
+        
+        .faq-question {
+            display: flex;
+            align-items: flex-start;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+        
+        .question-marker {
+            color: var(--primary);
+            margin-right: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .faq-answer {
+            padding-left: 1.75rem;
+            color: var(--gray);
+        }
+        
+        /* Footer */
+        .footer {
+            background: linear-gradient(to bottom, #433a3f 0%, #2a2427 100%);
+            color: white;
+            padding: 4rem 0 2rem;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            margin-right: 0.5rem;
+        }
+        
+        .footer-logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .footer-description {
+            color: var(--gray-light);
+            margin-bottom: 1.5rem;
+            max-width: 400px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        
+        .social-link:hover {
+            background-color: var(--primary);
+        }
+        
+        .footer-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: var(--gray-light);
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-contact-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-contact-icon {
+            color: var(--primary);
+            margin-right: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        
+        .footer-contact-text {
+            color: var(--gray-light);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .copyright {
+            color: var(--gray-light);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .hero-content {
+                flex-direction: column;
+            }
+            
+            .hero-text, .hero-image {
+                width: 100%;
+            }
+            
+            .hero-text {
+                margin-bottom: 3rem;
+            }
+            
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .contact-form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-form-sidebar {
+                padding-bottom: 3rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                flex-wrap: wrap;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .nav-links {
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                margin-top: 1rem;
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .nav-links li {
+                margin: 0.5rem 0;
+            }
+            
+            .section-title {
+                font-size: 1.75rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .feature-cards, .service-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="#" class="logo">
+                    <div class="logo-icon">M</div>
+                    <span class="logo-text">MyGEMS</span>
+                </a>
+                <button class="mobile-menu-btn">&#9776;</button>
+                <ul class="nav-links">
+                    <li><a href="#about" class="nav-link">事業概要</a></li>
+                    <li><a href="#services" class="nav-link">サービス</a></li>
+                    <li><a href="#process" class="nav-link">導入プロセス</a></li>
+                    <li><a href="#testimonial" class="nav-link">導入事例</a></li>
+                    <li><a href="#contact" class="nav-link">お問い合わせ</a></li>
+                    <li><a href="#contact" class="btn">無料相談</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+        <div class="hero-blob hero-blob-3"></div>
+        
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text animate-fadeIn">
+                    <h1 class="hero-title">
+                        生成AIで医療現場に
+                        <span>「人間本来の温かみ」を</span>
+                    </h1>
+                    <p class="hero-description">
+                        MyGEMSは小規模医療機関向けに特化したAIソリューションを提供。
+                        AIで事務作業を効率化し、医療者が患者と向き合う時間を増やします。
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#services" class="btn btn-large">サービスを見る</a>
+                        <a href="#contact" class="btn btn-secondary btn-large">無料相談を予約</a>
+                    </div>
+                    <div class="campaign-badge">
+                        <div class="campaign-badge-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
+                        <div class="campaign-badge-text">
+                            <div class="campaign-badge-title">期間限定キャンペーン</div>
+                            <div>全サービス <strong>50%OFF</strong> 実施中（2025年3月末まで）</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-image">
+                    <div class="hero-card">
+                        <div class="hero-card-header">
+                            <div class="hero-card-badge">医療×AI</div>
+                            <div class="hero-card-rating">★★★★★</div>
+                        </div>
+                        <h3 class="hero-card-title">AIが変える医療の未来</h3>
+                        <p class="hero-card-description">
+                            AIの導入により医療現場の業務効率が大幅に向上。スタッフの負担軽減と患者サービスの質向上を同時に実現できます。
+                        </p>
+                        <div class="hero-card-features">
+                            <div class="hero-card-feature">
+                                <span class="hero-card-feature-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </span>
+                                <span>業務効率化</span>
+                            </div>
+                            <div class="hero-card-feature">
+                                <span class="hero-card-feature-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </span>
+                                <span>コスト削減</span>
+                            </div>
+                            <div class="hero-card-feature">
+                                <span class="hero-card-feature-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </span>
+                                <span>エラー防止</span>
+                            </div>
+                            <div class="hero-card-feature">
+                                <span class="hero-card-feature-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </span>
+                                <span>品質向上</span>
+                            </div>
+                        </div>
+                        <div class="hero-card-stats">
+                            <span class="hero-card-stats-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </span>
+                            <span><strong>事務作業時間 最大50%削減</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section" id="about">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle">ABOUT US</span>
+                <h2 class="section-title">MyGEMSとは</h2>
+                <p class="section-description">
+                    2024年10月設立。医療現場の業務効率化と、患者様に向き合う時間の創出を目指しています。
+                </p>
+            </div>
+            
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <div class="feature-card-header"></div>
+                    <div class="feature-card-body">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path></svg>
+                        </div>
+                        <h3 class="feature-title">AIリテラシーの底上げ</h3>
+                        <p class="feature-description">
+                            職員向け研修やハンズオンセミナーを通じ、現場が安心してAIを活用できる体制を構築します。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-card-header"></div>
+                    <div class="feature-card-body">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                        </div>
+                        <h3 class="feature-title">個別最適なソリューション</h3>
+                        <p class="feature-description">
+                            GPTsなどのソリューションを中小規模医療機関の予算・人員体制に合わせて導入し、業務効率化と医療品質向上を同時に実現します。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-card-header"></div>
+                    <div class="feature-card-body">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </div>
+                        <h3 class="feature-title">医療者本来の役割への回帰</h3>
+                        <p class="feature-description">
+                            AIで事務作業を軽減し、医療者が患者と向き合う時間を増やします。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+<!-- Services Section -->
+    <section class="section services" id="services">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle">SERVICES</span>
+                <h2 class="section-title">サービスラインナップ</h2>
+                <p class="section-description">
+                    医療現場のニーズに合わせた3つのサービスを提供しています
+                </p>
+            </div>
+            
+            <div class="service-cards">
+                <div class="service-card">
+                    <div class="service-card-header">
+                        <div class="service-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <h3 class="service-title">AIリテラシー基礎講座</h3>
+                    </div>
+                    <div class="service-card-body">
+                        <p class="service-description">
+                            看護師、医師、事務職などを対象に、生成AIの基礎、病院実務での活用例、セキュリティ留意点などをわかりやすく解説します。
+                        </p>
+                        <div class="service-detail">
+                            <span class="service-detail-label">形式:</span>
+                            <span>オンサイトまたはオンライン（半日～1日）</span>
+                        </div>
+                        <div class="service-price">
+                            <div class="price-container">
+                                <span class="price-original">¥100,000</span>
+                                <span class="price-current">¥50,000</span>
+                            </div>
+                            <span class="price-discount">50%OFF</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-card-header">
+                        <div class="service-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path></svg>
+                        </div>
+                        <h3 class="service-title">ハンズオンセミナー</h3>
+                    </div>
+                    <div class="service-card-body">
+                        <p class="service-description">
+                            AIリテラシー基礎講座修了者またはAI導入を検討中の少人数グループを対象に、GPTツールを活用した実践演習を行います。
+                        </p>
+                        <div class="service-detail">
+                            <span class="service-detail-label">形式:</span>
+                            <span>1～2日程度</span>
+                        </div>
+                        <div class="service-price">
+                            <div class="price-container">
+                                <span class="price-original">¥150,000～</span>
+                                <span class="price-current">¥75,000～</span>
+                            </div>
+                            <span class="price-discount">50%OFF</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-card-header">
+                        <div class="service-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        </div>
+                        <h3 class="service-title">GPTs導入支援</h3>
+                    </div>
+                    <div class="service-card-body">
+                        <p class="service-description">
+                            院内マニュアル検索の自動化、簡易チャットボットなど、医療機関の業務効率化に役立つGPTsの導入をサポートします。
+                        </p>
+                        <div class="service-detail">
+                            <span class="service-detail-label">内容:</span>
+                            <span>要件ヒアリング、導入プラン作成、開発・セットアップ</span>
+                        </div>
+                        <div class="service-price">
+                            <div class="price-container">
+                                <span class="price-original">¥300,000～</span>
+                                <span class="price-current">¥150,000～</span>
+                            </div>
+                            <span class="price-discount">50%OFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="section" id="process">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle">PROCESS</span>
+                <h2 class="section-title">導入プロセス</h2>
+                <p class="section-description">
+                    お問い合わせから導入までスムーズにサポートします
+                </p>
+            </div>
+            
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-number">01</div>
+                    <div class="step-content">
+                        <h3 class="step-title">無料相談</h3>
+                        <p class="step-description">
+                            初回30～60分程度のヒアリングにて、課題やご要望をお伺いします。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">02</div>
+                    <div class="step-content">
+                        <h3 class="step-title">正式提案・契約</h3>
+                        <p class="step-description">
+                            提案内容やお見積りにご同意いただいた上で契約書を取り交わします。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">03</div>
+                    <div class="step-content">
+                        <h3 class="step-title">プラン作成</h3>
+                        <p class="step-description">
+                            導入プランを作成し、お客様のご要望に合わせてカスタマイズします。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">04</div>
+                    <div class="step-content">
+                        <h3 class="step-title">開発・セットアップ</h3>
+                        <p class="step-description">
+                            1ヶ月程度の改善期間を含め、最適なシステムを構築します。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">05</div>
+                    <div class="step-content">
+                        <h3 class="step-title">納品・保守</h3>
+                        <p class="step-description">
+                            納品後も必要に応じて保守サポートを提供します。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial Section -->
+    <section class="section testimonial" id="testimonial">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle">CASE STUDY</span>
+                <h2 class="section-title">導入事例</h2>
+                <p class="section-description">
+                    MyGEMSの導入で医療現場はどう変わったか
+                </p>
+            </div>
+            
+            <div class="testimonial-card">
+                <p class="testimonial-content">
+                    導入前は電子カルテの操作や文書作成に時間を取られ、患者さんと十分に向き合えませんでした。MyGEMSのAIチャットボット導入後は、カルテ入力の時間が半減。患者さんとの会話に集中できるようになり、診療の質が向上したと実感しています。
+                </p>
+                <div class="testimonial-author">
+                    <div class="author-avatar"></div>
+                    <div>
+                        <h4 class="author-name">鈴木院長</h4>
+                        <p class="author-position">鈴木内科クリニック</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section cta">
+        <div class="container">
+            <h2 class="cta-title">今なら導入費用50%OFF</h2>
+            <div class="cta-banner">
+                2025年3月末までの期間限定キャンペーン実施中！
+            </div>
+            <p class="cta-description">
+                まずは無料相談から。あなたの医療機関に最適なAIソリューションをご提案します。
+            </p>
+            <a href="#contact" class="btn btn-cta">無料相談を予約する</a>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section" id="contact">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle">CONTACT</span>
+                <h2 class="section-title">お問い合わせ</h2>
+                <p class="section-description">
+                    お気軽にご連絡ください。無料相談を承ります。
+                </p>
+            </div>
+            
+            <div class="contact-cards">
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.36 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </div>
+                    <h3 class="contact-title">お電話</h3>
+                    <p class="contact-info">03-XXXX-XXXX</p>
+                    <p class="contact-info">平日 9:00-18:00</p>
+                </div>
+                
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <h3 class="contact-title">メール</h3>
+                    <p class="contact-info"><a href="mailto:sukenaga@hotmail.com">sukenaga@hotmail.com</a></p>
+                    <p class="contact-info">24時間受付</p>
+                </div>
+                
+                <div class="contact-card">
+                    <div class="contact-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </div>
+                    <h3 class="contact-title">所在地</h3>
+                    <p class="contact-info">東京都千代田区</p>
+                    <p class="contact-info">〒100-0001</p>
+                </div>
+            </div>
+            
+            <div class="contact-form-container">
+                <div class="contact-form-grid">
+                    <div class="contact-form-sidebar">
+                        <h3 class="contact-form-title">お問い合わせフォーム</h3>
+                        <p class="contact-sidebar-description">
+                            MyGEMSのサービスについてご質問やご相談がありましたら、以下のフォームよりお気軽にお問い合わせください。
+                        </p>
+                        <div class="contact-feature">
+                            <span class="contact-feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            </span>
+                            <span>24時間以内に返信</span>
+                        </div>
+                        <div class="contact-feature">
+                            <span class="contact-feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            </span>
+                            <span>無料相談実施中</span>
+                        </div>
+                        <div class="contact-feature">
+                            <span class="contact-feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            </span>
+                            <span>オンライン相談も可能</span>
+                        </div>
+                    </div>
+                    <form class="contact-form">
+                        <div class="form-group">
+                            <label class="form-label">お名前<span class="form-required">*</span></label>
+                            <input type="text" class="form-control" placeholder="山田 太郎" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">メールアドレス<span class="form-required">*</span></label>
+                            <input type="email" class="form-control" placeholder="example@mail.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">医療機関名</label>
+                            <input type="text" class="form-control" placeholder="〇〇クリニック">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">お問い合わせ内容<span class="form-required">*</span></label>
+                            <textarea class="form-control" rows="5" placeholder="ご質問・ご相談内容をご記入ください" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-submit">送信する</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-logo">
+                        <div class="footer-logo-icon">M</div>
+                        <div class="footer-logo-text">MyGEMS</div>
+                    </div>
+                    <p class="footer-description">
+                        MyGEMSは小規模医療機関向けに特化したAIソリューションを提供。AIで事務作業を効率化し、医療者が患者と向き合う時間を増やします。
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </a>
+                        <a href="#" class="social-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="footer-title">サービス</h3>
+                    <ul class="footer-links">
+                        <li><a href="#services">AIリテラシー基礎講座</a></li>
+                        <li><a href="#services">ハンズオンセミナー</a></li>
+                        <li><a href="#services">GPTs導入支援</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="footer-title">会社情報</h3>
+                    <ul class="footer-links">
+                        <li><a href="#about">会社概要</a></li>
+                        <li><a href="#testimonial">導入事例</a></li>
+                        <li><a href="#process">導入プロセス</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="footer-title">お問い合わせ</h3>
+                    <div class="footer-contact-item">
+                        <span class="footer-contact-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </span>
+                        <a href="mailto:sukenaga@hotmail.com" class="footer-contact-text">sukenaga@hotmail.com</a>
+                    </div>
+                    <div class="footer-contact-item">
+                        <span class="footer-contact-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.36 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        </span>
+                        <span class="footer-contact-text">03-XXXX-XXXX</span>
+                    </div>
+                    <div class="footer-contact-item">
+                        <span class="footer-contact-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        </span>
+                        <span class="footer-contact-text">東京都千代田区</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="copyright">&copy; 2025 MyGEMS - 生成AIで医療現場に温かみを</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
