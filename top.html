@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myGEMS - 生成AIで医療現場に温かみを</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #dbeafe;
+            --secondary: #10b981;
+            --secondary-dark: #059669;
+            --accent: #f59e0b;
+            --dark: #1e293b;
+            --gray-dark: #334155;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --light: #f8fafc;
+            --white: #ffffff;
+        }
+
+```
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    }
+    
+    body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f0f7ff 0%, #e6f7f2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .background-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(30px);
+        opacity: 0.3;
+        z-index: 1;
+    }
+    
+    .blob-1 {
+        width: 200px;
+        height: 200px;
+        background-color: var(--primary-light);
+        top: 10%;
+        right: 20%;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .blob-2 {
+        width: 300px;
+        height: 300px;
+        background-color: rgba(16, 185, 129, 0.2);
+        bottom: 20%;
+        left: 10%;
+        animation: float 8s ease-in-out infinite reverse;
+    }
+    
+    .blob-3 {
+        width: 150px;
+        height: 150px;
+        background-color: rgba(245, 158, 11, 0.2);
+        top: 60%;
+        right: 10%;
+        animation: float 10s ease-in-out infinite;
+    }
+    
+    .container {
+        background-color: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        padding: 3rem;
+        text-align: center;
+        max-width: 600px;
+        width: 90%;
+        position: relative;
+        z-index: 2;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .logo-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        margin-right: 0.75rem;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 1.5rem;
+        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+    }
+    
+    .logo-text {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    
+    .subtitle {
+        font-size: 1.2rem;
+        color: var(--gray);
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+    
+    .preparing-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--accent), #e29000);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
+        animation: pulse 2s infinite;
+    }
+    
+    .description {
+        color: var(--gray-dark);
+        margin-bottom: 2.5rem;
+        line-height: 1.6;
+    }
+    
+    .company-info {
+        background-color: var(--light);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--gray-light);
+    }
+    
+    .company-info h3 {
+        color: var(--primary);
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        text-align: left;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--gray-light);
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--gray-dark);
+    }
+    
+    .info-value {
+        color: var(--gray);
+    }
+    
+    .contact-section {
+        text-align: center;
+    }
+    
+    .contact-title {
+        color: var(--primary);
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .contact-email {
+        font-size: 1.1rem;
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border: 2px solid var(--primary);
+        border-radius: 0.5rem;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .contact-email:hover {
+        background-color: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+    }
+    
+    .contact-note {
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        color: var(--gray);
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-20px) scale(1.05); }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    @media (max-width: 768px) {
+        .container {
+            padding: 2rem;
+            margin: 1rem;
+        }
+        
+        .main-title {
+            font-size: 2rem;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+        }
+        
+        .logo-icon {
+            width: 3rem;
+            height: 3rem;
+            font-size: 1.2rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .preparing-badge {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="background-blob blob-1"></div>
+    <div class="background-blob blob-2"></div>
+    <div class="background-blob blob-3"></div>
+
+```
+<div class="container">
+    <div class="logo">
+        <div class="logo-icon">M</div>
+        <div class="logo-text">myGEMS</div>
+    </div>
+    
+    <h1 class="main-title">ただいまホームページ準備中</h1>
+    <p class="subtitle">生成AIで医療現場に温かみを</p>
+    
+    <div class="preparing-badge">
+        🚀 近日公開予定
+    </div>
+    
+    <p class="description">
+        myGEMSは中小規模医療機関、離島、僻地などに特化したAIソリューションを提供し、<br>
+        AIで事務作業を効率化し、医療者が患者と向き合う時間を創出します。
+    </p>
+    
+    <div class="company-info">
+        <h3>会社情報</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">会社名</span>
+                <span class="info-value">myGEMS</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">設立</span>
+                <span class="info-value">2025年7月</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">代表</span>
+                <span class="info-value">助永 親彦</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">対象</span>
+                <span class="info-value">中小規模医療機関、離島、僻地など</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="contact-section">
+        <h3 class="contact-title">お問い合わせ</h3>
+        <a href="mailto:info@mygems.jp" class="contact-email">info@mygems.jp</a>
+        <p class="contact-note">お気軽にお問い合わせください</p>
+    </div>
+</div>
+```
+
+</body>
+</html>
