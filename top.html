@@ -26,7 +26,7 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     }
     
     body {
@@ -37,7 +37,7 @@
         justify-content: center;
         align-items: center;
         position: relative;
-        overflow: hidden;
+        padding: 2rem 0;
     }
     
     .background-blob {
@@ -191,41 +191,6 @@
         color: var(--gray);
     }
     
-    .contact-section {
-        text-align: center;
-    }
-    
-    .contact-title {
-        color: var(--primary);
-        margin-bottom: 1rem;
-        font-size: 1.1rem;
-    }
-    
-    .contact-email {
-        font-size: 1.1rem;
-        color: var(--primary);
-        text-decoration: none;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border: 2px solid var(--primary);
-        border-radius: 0.5rem;
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-    
-    .contact-email:hover {
-        background-color: var(--primary);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
-    }
-    
-    .contact-note {
-        margin-top: 1rem;
-        font-size: 0.9rem;
-        color: var(--gray);
-    }
-    
     @keyframes float {
         0%, 100% { transform: translateY(0) scale(1); }
         50% { transform: translateY(-20px) scale(1.05); }
@@ -278,7 +243,7 @@
 ```
 <div class="container">
     <div class="logo">
-        <div class="logo-icon">M</div>
+        <div class="logo-icon">m</div>
         <div class="logo-text">myGEMS</div>
     </div>
     
@@ -314,12 +279,6 @@
                 <span class="info-value">中小規模医療機関、離島、僻地など</span>
             </div>
         </div>
-    </div>
-    
-    <div class="contact-section">
-        <h3 class="contact-title">お問い合わせ</h3>
-        <a href="mailto:info@mygems.jp" class="contact-email">info@mygems.jp</a>
-        <p class="contact-note">お気軽にお問い合わせください</p>
     </div>
 </div>
 ```
