@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スマートアイランド推進実証業務 提案方向性の確認</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700;900&family=Noto+Sans+JP:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink-soft: #2d2d4a;
+    --ink-muted: #5a5a7a;
+    --paper: #f8f6f1;
+    --paper-warm: #f2efe8;
+    --accent-primary: #c4553a;
+    --accent-secondary: #2a6b5a;
+    --accent-tertiary: #3a5a8c;
+    --accent-gold: #b8942e;
+    --accent-purple: #6b4a8c;
+    --border-light: rgba(26,26,46,0.08);
+    --border-mid: rgba(26,26,46,0.15);
+    --shadow-soft: 0 2px 20px rgba(26,26,46,0.06);
+    --shadow-card: 0 4px 30px rgba(26,26,46,0.08);
+    --shadow-elevated: 0 8px 40px rgba(26,26,46,0.12);
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+font-family: ‘Noto Sans JP’, sans-serif;
+background: var(–paper);
+color: var(–ink);
+line-height: 1.9;
+font-size: 15px;
+font-weight: 400;
+-webkit-font-smoothing: antialiased;
+}
+
+/* ─── Hero Section ─── */
+.hero {
+background: var(–ink);
+color: var(–paper);
+padding: 80px 0 60px;
+position: relative;
+overflow: hidden;
+}
+.hero::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0; bottom: 0;
+background:
+radial-gradient(ellipse 80% 60% at 20% 80%, rgba(196,85,58,0.12) 0%, transparent 60%),
+radial-gradient(ellipse 60% 50% at 80% 20%, rgba(42,107,90,0.10) 0%, transparent 60%);
+pointer-events: none;
+}
+.hero::after {
+content: ‘’;
+position: absolute;
+bottom: 0; left: 0; right: 0;
+height: 1px;
+background: linear-gradient(90deg, transparent, rgba(196,85,58,0.4), var(–accent-gold), rgba(42,107,90,0.4), transparent);
+}
+
+.hero-inner {
+max-width: 900px;
+margin: 0 auto;
+padding: 0 40px;
+position: relative;
+z-index: 1;
+}
+
+.hero-label {
+font-family: ‘Source Code Pro’, monospace;
+font-size: 11px;
+letter-spacing: 3px;
+text-transform: uppercase;
+color: var(–accent-primary);
+margin-bottom: 24px;
+opacity: 0;
+animation: fadeSlideUp 0.6s ease forwards 0.2s;
+}
+
+.hero-title {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 32px;
+font-weight: 700;
+line-height: 1.5;
+letter-spacing: 0.02em;
+margin-bottom: 16px;
+opacity: 0;
+animation: fadeSlideUp 0.6s ease forwards 0.4s;
+}
+
+.hero-subtitle {
+font-size: 15px;
+font-weight: 300;
+color: rgba(248,246,241,0.6);
+line-height: 1.8;
+max-width: 640px;
+opacity: 0;
+animation: fadeSlideUp 0.6s ease forwards 0.6s;
+}
+
+.hero-meta {
+display: flex;
+gap: 32px;
+margin-top: 36px;
+padding-top: 28px;
+border-top: 1px solid rgba(248,246,241,0.08);
+opacity: 0;
+animation: fadeSlideUp 0.6s ease forwards 0.8s;
+}
+.hero-meta-item {
+font-size: 12px;
+color: rgba(248,246,241,0.4);
+}
+.hero-meta-item span {
+display: block;
+color: rgba(248,246,241,0.75);
+font-weight: 500;
+margin-top: 4px;
+font-size: 13px;
+}
+
+/* ─── Main Container ─── */
+.container {
+max-width: 900px;
+margin: 0 auto;
+padding: 0 40px;
+}
+
+/* ─── Purpose Banner ─── */
+.purpose-banner {
+background: white;
+border: 1px solid var(–border-light);
+border-left: 4px solid var(–accent-primary);
+border-radius: 0 8px 8px 0;
+padding: 32px 36px;
+margin: 48px auto;
+max-width: 900px;
+box-shadow: var(–shadow-soft);
+opacity: 0;
+animation: fadeIn 0.8s ease forwards 1.0s;
+}
+.purpose-banner h2 {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 16px;
+font-weight: 700;
+color: var(–accent-primary);
+margin-bottom: 14px;
+letter-spacing: 0.04em;
+}
+.purpose-banner p {
+font-size: 14.5px;
+line-height: 2;
+color: var(–ink-soft);
+}
+
+/* ─── Section Styles ─── */
+.section {
+margin: 56px 0;
+opacity: 0;
+animation: fadeIn 0.6s ease forwards;
+animation-play-state: paused;
+}
+.section.visible { animation-play-state: running; }
+
+.section-header {
+display: flex;
+align-items: center;
+gap: 16px;
+margin-bottom: 28px;
+padding-bottom: 16px;
+border-bottom: 1px solid var(–border-mid);
+}
+.section-number {
+font-family: ‘Source Code Pro’, monospace;
+font-size: 12px;
+font-weight: 500;
+color: white;
+background: var(–ink);
+width: 32px; height: 32px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 6px;
+flex-shrink: 0;
+}
+.section-title {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 20px;
+font-weight: 700;
+color: var(–ink);
+letter-spacing: 0.02em;
+}
+
+.section-body {
+padding-left: 48px;
+}
+.section-body p {
+margin-bottom: 18px;
+font-size: 14.5px;
+line-height: 2.1;
+color: var(–ink-soft);
+}
+.section-body p:last-child { margin-bottom: 0; }
+
+/* ─── Emphasis Text ─── */
+.key-point {
+background: linear-gradient(180deg, transparent 60%, rgba(196,85,58,0.10) 60%);
+font-weight: 600;
+color: var(–ink);
+padding: 0 2px;
+}
+
+.marker-green {
+background: linear-gradient(180deg, transparent 60%, rgba(42,107,90,0.12) 60%);
+font-weight: 600;
+color: var(–ink);
+}
+
+.marker-blue {
+background: linear-gradient(180deg, transparent 60%, rgba(58,90,140,0.12) 60%);
+font-weight: 600;
+color: var(–ink);
+}
+
+/* ─── Two-Layer Diagram ─── */
+.layer-diagram {
+margin: 32px 0;
+display: flex;
+flex-direction: column;
+gap: 0;
+}
+
+.layer-card {
+background: white;
+border: 1px solid var(–border-light);
+padding: 28px 32px;
+position: relative;
+box-shadow: var(–shadow-soft);
+}
+.layer-card:first-child {
+border-radius: 10px 10px 0 0;
+border-bottom: none;
+}
+.layer-card:last-child {
+border-radius: 0 0 10px 10px;
+}
+
+.layer-card::before {
+content: ‘’;
+position: absolute;
+left: 0; top: 0; bottom: 0;
+width: 4px;
+}
+.layer-card.layer-medical::before { background: var(–accent-primary); }
+.layer-card.layer-business::before { background: var(–accent-secondary); }
+
+.layer-tag {
+font-family: ‘Source Code Pro’, monospace;
+font-size: 10px;
+letter-spacing: 2px;
+text-transform: uppercase;
+padding: 4px 10px;
+border-radius: 4px;
+display: inline-block;
+margin-bottom: 12px;
+font-weight: 500;
+}
+.layer-medical .layer-tag {
+background: rgba(196,85,58,0.08);
+color: var(–accent-primary);
+}
+.layer-business .layer-tag {
+background: rgba(42,107,90,0.08);
+color: var(–accent-secondary);
+}
+
+.layer-name {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 17px;
+font-weight: 700;
+margin-bottom: 10px;
+color: var(–ink);
+}
+.layer-desc {
+font-size: 14px;
+line-height: 2;
+color: var(–ink-muted);
+}
+
+.layer-connector {
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+height: 0;
+z-index: 2;
+}
+.layer-connector span {
+background: var(–paper);
+border: 1px solid var(–border-mid);
+font-size: 10px;
+font-family: ‘Source Code Pro’, monospace;
+letter-spacing: 1px;
+color: var(–ink-muted);
+padding: 4px 14px;
+border-radius: 20px;
+position: relative;
+z-index: 3;
+}
+
+/* ─── Framework Summary ─── */
+.framework-grid {
+display: grid;
+grid-template-columns: 1fr;
+gap: 0;
+margin: 32px 0;
+border-radius: 10px;
+overflow: hidden;
+box-shadow: var(–shadow-card);
+}
+
+.pillar {
+background: white;
+padding: 24px 28px;
+display: grid;
+grid-template-columns: 48px 1fr;
+gap: 20px;
+align-items: start;
+border-bottom: 1px solid var(–border-light);
+transition: background 0.3s ease;
+}
+.pillar:last-child { border-bottom: none; }
+.pillar:hover { background: var(–paper-warm); }
+
+.pillar-icon {
+width: 48px; height: 48px;
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+flex-shrink: 0;
+}
+.pillar:nth-child(1) .pillar-icon { background: rgba(196,85,58,0.08); }
+.pillar:nth-child(2) .pillar-icon { background: rgba(58,90,140,0.08); }
+.pillar:nth-child(3) .pillar-icon { background: rgba(42,107,90,0.08); }
+.pillar:nth-child(4) .pillar-icon { background: rgba(184,148,46,0.08); }
+.pillar:nth-child(5) .pillar-icon { background: rgba(107,74,140,0.08); }
+
+.pillar-num {
+font-family: ‘Source Code Pro’, monospace;
+font-size: 11px;
+font-weight: 500;
+color: var(–ink-muted);
+margin-bottom: 4px;
+}
+.pillar-title {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 15px;
+font-weight: 700;
+color: var(–ink);
+margin-bottom: 6px;
+}
+.pillar-desc {
+font-size: 13.5px;
+line-height: 1.9;
+color: var(–ink-muted);
+}
+
+/* ─── Quote Block ─── */
+.quote-block {
+background: var(–ink);
+color: var(–paper);
+border-radius: 10px;
+padding: 36px 40px;
+margin: 40px 0;
+position: relative;
+overflow: hidden;
+}
+.quote-block::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 3px;
+background: linear-gradient(90deg, var(–accent-primary), var(–accent-gold), var(–accent-secondary));
+}
+.quote-block p {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 15px;
+line-height: 2.1;
+font-weight: 400;
+color: rgba(248,246,241,0.85);
+}
+
+/* ─── Callout ─── */
+.callout {
+background: white;
+border: 1px solid var(–border-light);
+border-radius: 8px;
+padding: 24px 28px;
+margin: 24px 0;
+box-shadow: var(–shadow-soft);
+}
+.callout-label {
+font-family: ‘Source Code Pro’, monospace;
+font-size: 10px;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(–accent-tertiary);
+margin-bottom: 10px;
+font-weight: 500;
+}
+.callout p {
+font-size: 14px;
+line-height: 2;
+color: var(–ink-soft);
+}
+
+/* ─── Closing ─── */
+.closing {
+background: var(–paper-warm);
+border-top: 1px solid var(–border-mid);
+padding: 48px 0;
+margin-top: 64px;
+}
+.closing-inner {
+max-width: 900px;
+margin: 0 auto;
+padding: 0 40px;
+text-align: center;
+}
+.closing p {
+font-size: 14.5px;
+line-height: 2.1;
+color: var(–ink-muted);
+max-width: 640px;
+margin: 0 auto;
+}
+.closing .closing-cta {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 17px;
+font-weight: 700;
+color: var(–ink);
+margin-bottom: 16px;
+}
+
+/* ─── Flow Diagram ─── */
+.flow-row {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+margin: 32px 0;
+flex-wrap: wrap;
+}
+.flow-step {
+background: white;
+border: 1px solid var(–border-light);
+padding: 10px 18px;
+border-radius: 6px;
+font-size: 13px;
+font-weight: 500;
+color: var(–ink-soft);
+box-shadow: var(–shadow-soft);
+white-space: nowrap;
+}
+.flow-arrow {
+color: var(–ink-muted);
+font-size: 14px;
+opacity: 0.4;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeSlideUp {
+from { opacity: 0; transform: translateY(16px); }
+to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+.hero { padding: 48px 0 40px; }
+.hero-title { font-size: 24px; }
+.hero-meta { flex-direction: column; gap: 16px; }
+.container { padding: 0 20px; }
+.section-body { padding-left: 0; }
+.purpose-banner { margin: 32px 20px; }
+.flow-row { flex-direction: column; }
+.flow-arrow { transform: rotate(90deg); }
+.pillar { grid-template-columns: 40px 1fr; gap: 14px; }
+.pillar-icon { width: 40px; height: 40px; font-size: 16px; }
+}
+
+/* ─── Print ─── */
+@media print {
+.hero { background: #1a1a2e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.section { opacity: 1 !important; animation: none !important; }
+body { font-size: 12px; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- ━━━ HERO ━━━ -->
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Smart Island Promotion — Proposal Direction</div>
+    <h1 class="hero-title">スマートアイランド推進実証業務<br>提案方向性の確認と合意形成</h1>
+    <p class="hero-subtitle">
+      提案書の完成度を高める前に、事業全体をどのような構造で組み立てるか——<br>
+      その骨格について認識を揃えるための協議資料です。
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">提案パートナー<span>株式会社テクノプロジェクト</span></div>
+      <div class="hero-meta-item">提案主体<span>my GEMS（陶山・助永）</span></div>
+      <div class="hero-meta-item">作成日<span>2026年3月19日</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ━━━ PURPOSE ━━━ -->
+
+<div class="purpose-banner">
+  <h2>本資料の目的</h2>
+  <p>
+    本日確認したいのは、最終的な文章表現や細部の設計そのものではありません。<br>
+    <span class="key-point">資金制約・期間制約・病院側の条件・採択可能性</span>を踏まえたうえで、今回の実証をどのような構造の事業として位置づけるか——その全体方向性について合意を形成することが主旨です。方向性の合意が取れた後、提案書への文章化・落とし込みは当方で進めます。
+  </p>
+</div>
+
+<main class="container">
+
+  <!-- ━━━ 01: 基本思想 ━━━ -->
+
+  <section class="section visible" style="animation-delay: 1.2s;">
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <h2 class="section-title">提案の基本思想</h2>
+    </div>
+    <div class="section-body">
+      <p>
+        今回の事業を<span class="key-point">単なる生成AIツールの導入で終わらせない</span>ことが、提案全体の出発点です。現場調査に始まり、業務棚卸し、課題の整理、優先順位付け、再構築案の提示、そして病院の意思決定に基づく改善実行へとつなげる——すなわち<span class="key-point">本質的な医療DX・AXの実証事業</span>として構成することを基本方針とします。
+      </p>
+
+```
+  <div class="flow-row">
+    <div class="flow-step">現場調査</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">業務棚卸し</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">課題整理</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">優先順位付け</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">再構築案</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">改善実行</div>
+  </div>
+
+  <p>
+    さらに、改善を単年度の外部支援で終わらせるのではなく、並行して職員やコアメンバーに教育パッケージを提供し、生成AIやデジタル技術を活用しながら<span class="marker-green">自施設内で改善を継続できる範囲——内製化可能領域を広げていく</span>ことを重要な柱として据えます。
+  </p>
+</div>
+```
+
+  </section>
+
+  <!-- ━━━ 02: 二層基盤 ━━━ -->
+
+  <section class="section visible" style="animation-delay: 1.4s;">
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <h2 class="section-title">生成AI利用基盤の二層構造</h2>
+    </div>
+    <div class="section-body">
+      <p>
+        医療情報を全く扱わない形では、スマートアイランド事業としてのインパクトが弱くなる懸念があります。そのため、<span class="key-point">電子カルテ系情報と安全に接続・管理できる生成AI利用環境</span>は、提案に必ず含める必要があると考えます。
+      </p>
+
+```
+  <div class="callout">
+    <div class="callout-label">制約条件の認識</div>
+    <p>
+      ただし、時間的制約・資金的制約を踏まえ、電子カルテベンダーとの大きな契約変更や保守契約の見直し、仕様変更を前提とするような重い実装は極力回避すべきです。ベンダーへの確認・調整は必要になり得るとしても、契約や仕様の大幅な変更が前提となる構成はリスクが高すぎると判断しています。
+    </p>
+  </div>
+
+  <p>
+    この制約を踏まえた現実的かつ説得力のある構成として、<span class="key-point">生成AI利用基盤を二層で整備する</span>方向性を提案します。
+  </p>
+
+  <div class="layer-diagram">
+    <div class="layer-card layer-medical">
+      <div class="layer-tag">Layer 1 — 医療情報系</div>
+      <div class="layer-name">医療情報対応 生成AI環境</div>
+      <div class="layer-desc">
+        電子カルテ系情報との接点を持ち得る、医療情報を安全に扱うための環境。テクノプロジェクトが中心的価値を発揮する領域であり、単に一般的なAIツールを使えるようにすることとは異なる、<strong>技術的専門性を伴う基盤整備</strong>として位置づけます。
+      </div>
+    </div>
+    <div class="layer-connector"><span>連携・補完</span></div>
+    <div class="layer-card layer-business">
+      <div class="layer-tag">Layer 2 — 非医療情報系</div>
+      <div class="layer-name">ビジネス用 生成AI環境</div>
+      <div class="layer-desc">
+        非医療情報・非個人情報領域で公式に利用できる複数アカウント対応のビジネス向け生成AI環境。会議録作成や文書草案に留まらず、<strong>業務棚卸し・見える化・構造化・再構築案作成・DX介入後のあるべき姿の設計</strong>といった上流の業務改善プロセスに活用します。
+      </div>
+    </div>
+  </div>
+
+  <p>
+    二層構造にすることで、医療情報領域を射程に入れつつ、同時に現実的なスピードで導入できる領域を確保し、教育・定着を進めやすくなります。
+  </p>
+</div>
+```
+
+  </section>
+
+  <!-- ━━━ 03: 教育と内製化 ━━━ -->
+
+  <section class="section visible" style="animation-delay: 1.6s;">
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <h2 class="section-title">教育パッケージと内製化の方針</h2>
+    </div>
+    <div class="section-body">
+      <p>
+        教育パッケージの具体的内容は現時点では決めきれないとしても、<span class="marker-green">事業の中に教育を明確に組み込み、基盤整備と並行して整えていく方向性</span>については、この段階で共有・合意しておきたい事項です。
+      </p>
+
+```
+  <div class="quote-block">
+    <p>
+      内製化は重要だが、すべてを100％内製化することを目指すわけではない。<br>
+      基盤整備と教育によって病院側で担える範囲を広げつつ、より高度なアプリケーション開発や専門性の高いシステム構築は、引き続きエンジニアや外部専門家と連携して進めるべき領域として整理する。
+    </p>
+  </div>
+
+  <p>
+    この整理により、「どこまでを内製化し、どこからを専門開発として外部と協働するのか」という線引きが明確になり、<span class="marker-blue">持続可能なDX推進モデル</span>として提案の説得力が増すと考えています。
+  </p>
+</div>
+```
+
+  </section>
+
+  <!-- ━━━ 04: 時間制約への現実的対応 ━━━ -->
+
+  <section class="section visible" style="animation-delay: 1.8s;">
+    <div class="section-header">
+      <div class="section-number">04</div>
+      <h2 class="section-title">時間制約を踏まえた現実的アプローチ</h2>
+    </div>
+    <div class="section-body">
+      <p>
+        本来であれば業務棚卸しから丁寧に入ることが理想ですが、<span class="key-point">提案書提出までの時間が極めて限られている</span>のが現実です。
+      </p>
+      <p>
+        そこで、本来の方法論は提案内で示しつつも、現時点では<span class="key-point">事前の現地訪問やヒアリングを通じて把握している上五島病院側の課題群を起点に進める</span>構成とします。すでに病院側から複数の重点課題が示されている以上、初年度はそれらを中心に重点ユースケースを設定し、限られた期間内でも実証として成立する設計に落とし込んでいく方が、採択可能性・実行可能性の両面で望ましいと判断しています。
+      </p>
+    </div>
+  </section>
+
+  <!-- ━━━ 05: SafeGENIE ━━━ -->
+
+  <section class="section visible" style="animation-delay: 2.0s;">
+    <div class="section-header">
+      <div class="section-number">05</div>
+      <h2 class="section-title">高度アプリケーションの位置づけ ── SafeGENIE</h2>
+    </div>
+    <div class="section-body">
+      <p>
+        SafeGENIEのような医療安全関連アプリケーションの試験的導入は、今回の実証において重要な位置づけを持ちます。
+      </p>
+      <p>
+        これは単なるツール紹介ではなく、<span class="marker-blue">「基盤の上に乗る高度アプリケーション」の代表例</span>として位置づけられます。つまり、内製化可能な領域と、専門開発として外部と協働すべき領域を明示する——<span class="key-point">多層的な実証モデルの一部</span>として語ることができる構成です。
+      </p>
+    </div>
+  </section>
+
+  <!-- ━━━ FRAMEWORK SUMMARY ━━━ -->
+
+  <section class="section visible" style="animation-delay: 2.2s;">
+    <div class="section-header">
+      <div class="section-number" style="background: var(--accent-primary);">★</div>
+      <h2 class="section-title">提案全体の構造 ── 5つの柱</h2>
+    </div>
+    <div class="section-body">
+      <p>以上を踏まえ、今回の提案は以下の5つの柱で全体を構成します。</p>
+
+```
+  <div class="framework-grid">
+    <div class="pillar">
+      <div class="pillar-icon">🔍</div>
+      <div>
+        <div class="pillar-num">Pillar ①</div>
+        <div class="pillar-title">現場課題の整理と業務再構築支援</div>
+        <div class="pillar-desc">ヒアリング・業務棚卸しから、課題の構造化と優先順位付け、そして再構築案の提示と病院の意思決定に基づく改善実行までを一貫して支援する。</div>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🏗️</div>
+      <div>
+        <div class="pillar-num">Pillar ②</div>
+        <div class="pillar-title">医療情報系・非医療情報系の二層AI基盤整備</div>
+        <div class="pillar-desc">テクノプロジェクトの技術的専門性を核とした医療情報対応環境と、即効性のあるビジネス用生成AI環境を並行して構築する。</div>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🎓</div>
+      <div>
+        <div class="pillar-num">Pillar ③</div>
+        <div class="pillar-title">職員・コアメンバーへの教育による内製化支援</div>
+        <div class="pillar-desc">教育パッケージを事業に組み込み、基盤整備と並行して自施設での改善継続能力を育成する。</div>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">⚡</div>
+      <div>
+        <div class="pillar-num">Pillar ④</div>
+        <div class="pillar-title">基盤上での重点ユースケース実証</div>
+        <div class="pillar-desc">上五島病院から示された重点課題を起点に、限られた期間でも成果を出せるユースケースを設定し、実証として成立させる。</div>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🚀</div>
+      <div>
+        <div class="pillar-num">Pillar ⑤</div>
+        <div class="pillar-title">高度アプリケーション導入を含む多段階実証</div>
+        <div class="pillar-desc">SafeGENIE等を「基盤の上に乗る専門アプリ」として試験導入し、内製化領域と専門開発領域の線引きを明示する多層モデルを示す。</div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </section>
+
+</main>
+
+<!-- ━━━ CLOSING ━━━ -->
+
+<footer class="closing">
+  <div class="closing-inner">
+    <p class="closing-cta">本日の確認事項</p>
+    <p>
+      上記の全体構造について認識を揃えられるかどうか——それが本日の主旨です。<br>
+      方向性の合意が取れた場合、提案書への文章化・落とし込みは当方にて進めます。<br>
+      細部を詰め切ることよりも、まず骨格の合意を得ることを優先します。
+    </p>
+  </div>
+</footer>
+
+<script>
+  // Intersection Observer for scroll-triggered animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.section:not(.visible)').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
