@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI設計の全体像 — 原理原則から実務設計まで</title>
+<style>
+:root {
+  --primary: #0f2b46;
+  --primary-mid: #1a4068;
+  --secondary: #2980b9;
+  --accent: #e67e22;
+  --accent-warm: #d35400;
+  --teal: #1abc9c;
+  --teal-dark: #16a085;
+  --red: #c0392b;
+  --light: #f5f7fa;
+  --light-warm: #fdf6ee;
+  --dark: #1e2a38;
+  --text: #2c3e50;
+  --text-light: #5d6d7e;
+  --border: #dce1e8;
+  --card-shadow: 0 4px 24px rgba(15,43,70,0.08);
+  --card-shadow-hover: 0 12px 40px rgba(15,43,70,0.14);
+}
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+font-family: “Hiragino Kaku Gothic Pro”, “Meiryo”, “Noto Sans JP”, sans-serif;
+line-height: 1.85;
+background: var(–light);
+color: var(–text);
+font-size: 15px;
+}
+
+.container { max-width: 1180px; margin: auto; padding: 0 24px; }
+
+/* ── HEADER ── */
+header {
+background: linear-gradient(135deg, var(–primary) 0%, var(–primary-mid) 40%, var(–secondary) 100%);
+color: #fff;
+padding: 72px 0 100px;
+text-align: center;
+position: relative;
+overflow: hidden;
+clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+margin-bottom: 48px;
+}
+header::before {
+content: “”;
+position: absolute;
+top: -60%;
+right: -20%;
+width: 600px;
+height: 600px;
+background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+border-radius: 50%;
+}
+header::after {
+content: “”;
+position: absolute;
+bottom: -30%;
+left: -10%;
+width: 400px;
+height: 400px;
+background: radial-gradient(circle, rgba(26,188,156,0.12) 0%, transparent 70%);
+border-radius: 50%;
+}
+header .container { position: relative; z-index: 1; }
+h1 { font-size: 2.6rem; font-weight: 800; letter-spacing: 0.04em; margin-bottom: 16px; }
+.subtitle { font-size: 1.15rem; opacity: 0.88; font-weight: 400; line-height: 1.7; }
+.header-badge {
+display: inline-block;
+background: rgba(255,255,255,0.15);
+border: 1px solid rgba(255,255,255,0.25);
+border-radius: 100px;
+padding: 6px 20px;
+font-size: 0.82rem;
+margin-bottom: 20px;
+letter-spacing: 0.08em;
+backdrop-filter: blur(4px);
+}
+
+/* ── TOC ── */
+.toc {
+background: #fff;
+border-radius: 14px;
+padding: 36px 40px;
+box-shadow: var(–card-shadow);
+margin-bottom: 48px;
+border-left: 5px solid var(–secondary);
+}
+.toc h2 {
+font-size: 1.2rem;
+color: var(–primary);
+margin-bottom: 20px;
+border: none;
+padding: 0;
+}
+.toc-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+gap: 8px 32px;
+}
+.toc-item {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 7px 0;
+color: var(–text);
+text-decoration: none;
+font-size: 0.92rem;
+transition: 0.2s;
+border-bottom: 1px solid transparent;
+}
+.toc-item:hover { color: var(–secondary); border-bottom-color: var(–secondary); }
+.toc-num {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 26px;
+height: 26px;
+background: var(–secondary);
+color: #fff;
+border-radius: 6px;
+font-size: 0.75rem;
+font-weight: 700;
+flex-shrink: 0;
+}
+
+/* ── SECTIONS ── */
+section {
+background: #fff;
+border-radius: 14px;
+padding: 40px 44px;
+box-shadow: var(–card-shadow);
+margin-bottom: 44px;
+position: relative;
+}
+section::before {
+content: “”;
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 4px;
+border-radius: 14px 14px 0 0;
+background: linear-gradient(90deg, var(–primary), var(–secondary));
+}
+
+h2 {
+color: var(–primary);
+font-size: 1.5rem;
+font-weight: 800;
+margin: 0 0 24px 0;
+padding-bottom: 14px;
+border-bottom: 2px solid var(–border);
+display: flex;
+align-items: center;
+gap: 14px;
+}
+h2 .sec-icon {
+width: 40px;
+height: 40px;
+border-radius: 10px;
+background: linear-gradient(135deg, var(–primary), var(–secondary));
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+}
+h2 .sec-icon svg { width: 20px; height: 20px; fill: #fff; }
+
+h3 {
+color: var(–primary-mid);
+font-size: 1.15rem;
+font-weight: 700;
+margin: 28px 0 14px;
+padding-left: 14px;
+border-left: 4px solid var(–teal);
+}
+
+h4 {
+color: var(–text);
+font-size: 1rem;
+font-weight: 700;
+margin: 20px 0 10px;
+}
+
+p { margin-bottom: 14px; }
+
+/* ── HIGHLIGHT ── */
+.hl {
+background: linear-gradient(transparent 55%, rgba(26,188,156,0.22) 45%);
+font-weight: 700;
+}
+.hl-warm {
+background: linear-gradient(transparent 55%, rgba(230,126,34,0.2) 45%);
+font-weight: 700;
+}
+
+/* ── FLOW CHAIN ── */
+.flow-chain {
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+gap: 0;
+margin: 20px 0 28px;
+padding: 20px;
+background: linear-gradient(135deg, #f0f4f8 0%, #e8edf2 100%);
+border-radius: 12px;
+}
+.flow-step {
+background: var(–primary);
+color: #fff;
+padding: 10px 22px;
+border-radius: 8px;
+font-size: 0.88rem;
+font-weight: 600;
+white-space: nowrap;
+}
+.flow-arrow {
+width: 28px;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+}
+.flow-arrow svg { width: 20px; height: 20px; fill: var(–secondary); }
+
+/* ── PRINCIPLE CARDS ── */
+.principle-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+gap: 24px;
+margin: 24px 0;
+}
+.principle-card {
+background: #fff;
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 24px;
+position: relative;
+transition: 0.3s;
+overflow: hidden;
+}
+.principle-card:hover {
+transform: translateY(-3px);
+box-shadow: var(–card-shadow-hover);
+}
+.principle-card::after {
+content: “”;
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 3px;
+}
+.principle-card:nth-child(1)::after { background: var(–secondary); }
+.principle-card:nth-child(2)::after { background: var(–teal); }
+.principle-card:nth-child(3)::after { background: var(–accent); }
+.principle-card:nth-child(4)::after { background: var(–red); }
+.principle-card:nth-child(5)::after { background: #8e44ad; }
+.principle-card:nth-child(6)::after { background: #2c3e50; }
+.pc-num {
+position: absolute;
+top: 12px;
+right: 16px;
+font-size: 2.8rem;
+font-weight: 900;
+opacity: 0.06;
+color: var(–primary);
+}
+.pc-title {
+font-size: 1.05rem;
+font-weight: 700;
+color: var(–primary);
+margin-bottom: 10px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.pc-title .badge {
+font-size: 0.7rem;
+padding: 2px 10px;
+border-radius: 100px;
+color: #fff;
+font-weight: 600;
+}
+.pc-body { font-size: 0.92rem; color: var(–text-light); }
+
+/* ── FUNCTION CARDS ── */
+.func-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+gap: 18px;
+margin: 24px 0;
+}
+.func-card {
+background: linear-gradient(135deg, var(–primary) 0%, var(–primary-mid) 100%);
+color: #fff;
+border-radius: 12px;
+padding: 22px 20px;
+text-align: center;
+transition: 0.3s;
+}
+.func-card:hover { transform: translateY(-3px); box-shadow: var(–card-shadow-hover); }
+.func-num {
+font-size: 2rem;
+font-weight: 900;
+opacity: 0.3;
+margin-bottom: 4px;
+}
+.func-title {
+font-size: 1rem;
+font-weight: 700;
+margin-bottom: 8px;
+}
+.func-desc { font-size: 0.82rem; opacity: 0.85; line-height: 1.6; }
+
+/* ── AXIS TABLE ── */
+.axis-table {
+width: 100%;
+border-collapse: separate;
+border-spacing: 0;
+margin: 24px 0;
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.axis-table thead th {
+background: var(–primary);
+color: #fff;
+padding: 14px 20px;
+font-size: 0.9rem;
+font-weight: 700;
+text-align: left;
+}
+.axis-table tbody td {
+padding: 14px 20px;
+border-bottom: 1px solid var(–border);
+font-size: 0.9rem;
+vertical-align: top;
+}
+.axis-table tbody tr:last-child td { border-bottom: none; }
+.axis-table tbody tr:nth-child(even) { background: #f8fafc; }
+.axis-label {
+font-weight: 700;
+color: var(–primary);
+white-space: nowrap;
+}
+
+/* ── STEP TIMELINE ── */
+.step-timeline { margin: 28px 0; }
+.step-item {
+display: flex;
+gap: 24px;
+margin-bottom: 0;
+position: relative;
+}
+.step-marker {
+display: flex;
+flex-direction: column;
+align-items: center;
+flex-shrink: 0;
+width: 48px;
+}
+.step-dot {
+width: 48px;
+height: 48px;
+border-radius: 50%;
+background: linear-gradient(135deg, var(–secondary), var(–teal));
+color: #fff;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 800;
+font-size: 1.1rem;
+flex-shrink: 0;
+z-index: 1;
+}
+.step-line {
+width: 3px;
+flex-grow: 1;
+background: linear-gradient(180deg, var(–secondary), var(–border));
+min-height: 24px;
+}
+.step-content {
+padding-bottom: 32px;
+flex: 1;
+}
+.step-content h4 {
+margin: 6px 0 8px;
+font-size: 1.08rem;
+color: var(–primary);
+}
+.step-content p { font-size: 0.92rem; color: var(–text-light); margin-bottom: 8px; }
+.step-item:last-child .step-line { display: none; }
+.step-item:last-child .step-content { padding-bottom: 0; }
+
+/* ── CONTEXT CARDS ── */
+.ctx-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+gap: 28px;
+margin: 28px 0;
+}
+.ctx-card {
+border-radius: 14px;
+overflow: hidden;
+box-shadow: var(–card-shadow);
+transition: 0.3s;
+background: #fff;
+}
+.ctx-card:hover { transform: translateY(-4px); box-shadow: var(–card-shadow-hover); }
+.ctx-header {
+padding: 20px 24px;
+color: #fff;
+display: flex;
+align-items: center;
+gap: 14px;
+position: relative;
+}
+.ctx-header .ctx-num {
+position: absolute;
+right: 20px;
+top: 50%;
+transform: translateY(-50%);
+font-size: 2.8rem;
+font-weight: 900;
+opacity: 0.2;
+}
+.ctx-icon {
+width: 42px;
+height: 42px;
+border-radius: 50%;
+background: rgba(255,255,255,0.2);
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+}
+.ctx-icon svg { width: 20px; height: 20px; fill: #fff; }
+.ctx-header h4 { color: #fff; margin: 0; font-size: 1.05rem; }
+.ctx-body { padding: 22px 24px; }
+.ctx-body h5 { font-size: 0.88rem; color: var(–text-light); font-weight: 600; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.ctx-body ul { list-style: none; margin: 0 0 10px; }
+.ctx-body li {
+margin-bottom: 6px;
+padding-left: 20px;
+position: relative;
+font-size: 0.9rem;
+}
+.ctx-body li::before {
+content: “”;
+width: 7px;
+height: 7px;
+border-radius: 50%;
+position: absolute;
+left: 0;
+top: 9px;
+}
+.ctx-note {
+background: #f8fafc;
+border-left: 3px solid var(–teal);
+padding: 12px 16px;
+border-radius: 0 8px 8px 0;
+font-size: 0.85rem;
+color: var(–text-light);
+margin-top: 10px;
+}
+.c1 .ctx-header { background: linear-gradient(135deg, #2980b9, #3498db); }
+.c1 li::before { background: #2980b9; }
+.c2 .ctx-header { background: linear-gradient(135deg, #16a085, #1abc9c); }
+.c2 li::before { background: #16a085; }
+.c3 .ctx-header { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+.c3 li::before { background: #8e44ad; }
+.c4 .ctx-header { background: linear-gradient(135deg, #d35400, #e67e22); }
+.c4 li::before { background: #d35400; }
+.c5 .ctx-header { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+.c5 li::before { background: #c0392b; }
+.c6 .ctx-header { background: linear-gradient(135deg, #2c3e50, #34495e); }
+.c6 li::before { background: #2c3e50; }
+
+/* ── PITFALL LIST ── */
+.pitfall-list { margin: 24px 0; }
+.pitfall-item {
+display: flex;
+gap: 16px;
+padding: 18px 20px;
+background: #fff;
+border: 1px solid var(–border);
+border-radius: 10px;
+margin-bottom: 12px;
+transition: 0.2s;
+align-items: flex-start;
+}
+.pitfall-item:hover { border-color: var(–red); background: #fef9f8; }
+.pitfall-badge {
+width: 36px;
+height: 36px;
+border-radius: 8px;
+background: linear-gradient(135deg, var(–red), #e74c3c);
+color: #fff;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 800;
+font-size: 0.85rem;
+flex-shrink: 0;
+}
+.pitfall-text { flex: 1; }
+.pitfall-text strong { color: var(–red); }
+.pitfall-text p { font-size: 0.9rem; margin: 4px 0 0; color: var(–text-light); }
+
+/* ── SUBSIDY SECTION ── */
+.subsidy-section {
+background: linear-gradient(135deg, #fdf6ee 0%, #fef9f4 100%);
+border: 2px solid #f0d9b5;
+}
+.subsidy-section::before {
+background: linear-gradient(90deg, var(–accent), var(–accent-warm));
+}
+
+/* ── LOGIC MODEL ── */
+.logic-model {
+display: flex;
+align-items: stretch;
+gap: 0;
+margin: 24px 0;
+overflow-x: auto;
+padding: 4px;
+}
+.lm-item {
+flex: 1;
+min-width: 140px;
+text-align: center;
+display: flex;
+flex-direction: column;
+}
+.lm-box {
+border-radius: 10px;
+padding: 16px 12px;
+font-size: 0.88rem;
+font-weight: 600;
+flex: 1;
+}
+.lm-arrow {
+width: 32px;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+}
+.lm-arrow svg { width: 24px; height: 24px; fill: var(–accent); }
+.lm-label {
+font-size: 0.72rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+margin-bottom: 6px;
+color: var(–text-light);
+}
+.lm1 .lm-box { background: #e8f0fe; color: #1a4068; border: 1px solid #b8d4f0; }
+.lm2 .lm-box { background: #e0f2f1; color: #16a085; border: 1px solid #a8dcd6; }
+.lm3 .lm-box { background: #fef3e2; color: #d35400; border: 1px solid #f5d5a5; }
+.lm4 .lm-box { background: #fde8e8; color: #c0392b; border: 1px solid #f0b8b8; }
+.lm5 .lm-box { background: #ede7f6; color: #6a1b9a; border: 1px solid #c5b3db; }
+
+/* ── STRATEGY COMPARE ── */
+.strat-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 20px;
+margin: 24px 0;
+}
+.strat-card {
+border-radius: 12px;
+overflow: hidden;
+box-shadow: var(–card-shadow);
+background: #fff;
+}
+.strat-head {
+padding: 18px 20px;
+color: #fff;
+text-align: center;
+}
+.strat-card:nth-child(1) .strat-head { background: var(–secondary); }
+.strat-card:nth-child(2) .strat-head { background: var(–teal-dark); }
+.strat-card:nth-child(3) .strat-head { background: var(–accent-warm); }
+.strat-head h4 { color: #fff; margin: 0; font-size: 1.05rem; }
+.strat-head .strat-sub { font-size: 0.8rem; opacity: 0.85; margin-top: 2px; }
+.strat-body { padding: 20px; font-size: 0.9rem; }
+.strat-body dt { font-weight: 700; color: var(–primary); margin-top: 10px; }
+.strat-body dd { margin: 0 0 6px; padding-left: 0; color: var(–text-light); }
+.strat-rec {
+text-align: center;
+padding: 10px;
+font-weight: 700;
+font-size: 0.85rem;
+}
+
+/* ── TECHNIQUE CHIPS ── */
+.tech-list { margin: 24px 0; }
+.tech-item {
+display: flex;
+gap: 16px;
+align-items: flex-start;
+padding: 16px 20px;
+border-left: 4px solid var(–accent);
+background: var(–light-warm);
+border-radius: 0 10px 10px 0;
+margin-bottom: 12px;
+}
+.tech-num {
+width: 32px;
+height: 32px;
+border-radius: 50%;
+background: var(–accent);
+color: #fff;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 800;
+font-size: 0.85rem;
+flex-shrink: 0;
+}
+.tech-text { flex: 1; font-size: 0.92rem; }
+.tech-text strong { color: var(–accent-warm); }
+
+/* ── LAYER DIAGRAM ── */
+.layer-stack { margin: 28px 0; }
+.layer-item {
+display: flex;
+align-items: stretch;
+margin-bottom: 2px;
+}
+.layer-label {
+width: 120px;
+padding: 16px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: #fff;
+font-weight: 700;
+font-size: 0.88rem;
+flex-shrink: 0;
+}
+.layer-content {
+flex: 1;
+padding: 16px 24px;
+display: flex;
+align-items: center;
+font-size: 0.92rem;
+}
+.layer-item:nth-child(1) .layer-label { background: var(–primary); border-radius: 10px 0 0 0; }
+.layer-item:nth-child(1) .layer-content { background: #e8f0fe; border-radius: 0 10px 0 0; }
+.layer-item:nth-child(2) .layer-label { background: var(–secondary); }
+.layer-item:nth-child(2) .layer-content { background: #eaf4fc; }
+.layer-item:nth-child(3) .layer-label { background: var(–teal-dark); }
+.layer-item:nth-child(3) .layer-content { background: #e0f2f1; }
+.layer-item:nth-child(4) .layer-label { background: var(–accent); }
+.layer-item:nth-child(4) .layer-content { background: #fef3e2; }
+.layer-item:nth-child(5) .layer-label { background: var(–red); border-radius: 0 0 0 10px; }
+.layer-item:nth-child(5) .layer-content { background: #fde8e8; border-radius: 0 0 10px 0; }
+
+/* ── CALLOUT / QUOTE ── */
+.callout {
+background: linear-gradient(135deg, var(–primary) 0%, var(–primary-mid) 100%);
+color: #fff;
+padding: 32px 36px;
+border-radius: 14px;
+margin: 28px 0;
+position: relative;
+overflow: hidden;
+}
+.callout::before {
+content: “”;
+position: absolute;
+top: -40px;
+right: -40px;
+width: 160px;
+height: 160px;
+background: rgba(255,255,255,0.05);
+border-radius: 50%;
+}
+.callout p { margin-bottom: 8px; opacity: 0.95; font-size: 1.05rem; }
+.callout strong { color: var(–teal); }
+
+.callout-accent {
+background: linear-gradient(135deg, var(–accent-warm) 0%, var(–accent) 100%);
+}
+.callout-accent strong { color: #fff; }
+
+/* ── MISCONCEPTION ── */
+.misconception {
+display: flex;
+gap: 20px;
+align-items: flex-start;
+padding: 20px;
+border: 1px solid var(–border);
+border-radius: 10px;
+margin-bottom: 14px;
+background: #fff;
+}
+.mis-badge {
+padding: 4px 12px;
+border-radius: 6px;
+font-size: 0.75rem;
+font-weight: 700;
+flex-shrink: 0;
+white-space: nowrap;
+}
+.mis-wrong { background: #fde8e8; color: var(–red); }
+.mis-right { background: #e0f2f1; color: var(–teal-dark); }
+.mis-text { flex: 1; font-size: 0.92rem; }
+.mis-text .wrong { color: var(–red); font-weight: 600; text-decoration: line-through; opacity: 0.7; }
+.mis-text .right { color: var(–teal-dark); font-weight: 600; }
+
+/* ── FOOTER ── */
+footer {
+background: var(–dark);
+color: rgba(255,255,255,0.7);
+padding: 36px 0;
+text-align: center;
+font-size: 0.85rem;
+margin-top: 20px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+h1 { font-size: 1.8rem; }
+section { padding: 28px 22px; }
+.principle-grid, .ctx-grid { grid-template-columns: 1fr; }
+.func-grid { grid-template-columns: repeat(2, 1fr); }
+.strat-grid { grid-template-columns: 1fr; }
+.toc-grid { grid-template-columns: 1fr; }
+header { padding: 48px 0 72px; }
+.flow-chain { flex-direction: column; align-items: stretch; gap: 8px; }
+.flow-arrow { transform: rotate(90deg); width: 100%; }
+.flow-step { text-align: center; }
+.logic-model { flex-direction: column; }
+.lm-arrow { transform: rotate(90deg); width: 100%; }
+.layer-item { flex-direction: column; }
+.layer-label { width: 100%; border-radius: 8px 8px 0 0 !important; }
+.layer-content { border-radius: 0 0 8px 8px !important; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+
+<header>
+  <div class="container">
+    <div class="header-badge">COMPREHENSIVE GUIDE</div>
+    <h1>KPI設計の全体像</h1>
+    <div class="subtitle">原理原則から実務設計・制度対応まで<br>多面的KPI設計を体系的に理解するための完全ガイド</div>
+  </div>
+</header>
+
+<!-- ═══════ TOC ═══════ -->
+
+<div class="container">
+
+<div class="toc">
+  <h2>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    目次
+  </h2>
+  <div class="toc-grid">
+    <a class="toc-item" href="#s1"><span class="toc-num">1</span>KPIとは何か — 基本構造</a>
+    <a class="toc-item" href="#s2"><span class="toc-num">2</span>KPIの6つの原理原則</a>
+    <a class="toc-item" href="#s3"><span class="toc-num">3</span>KPIの5つの機能 — 多面性の根源</a>
+    <a class="toc-item" href="#s4"><span class="toc-num">4</span>KPIを捉える5つの基本軸</a>
+    <a class="toc-item" href="#s5"><span class="toc-num">5</span>KPI設計の標準手順（7Step）</a>
+    <a class="toc-item" href="#s6"><span class="toc-num">6</span>文脈別KPI設計パターン</a>
+    <a class="toc-item" href="#s7"><span class="toc-num">7</span>KPIが壊れる7つの典型パターン</a>
+    <a class="toc-item" href="#s8"><span class="toc-num">8</span>KPI設計の5層構造モデル</a>
+    <a class="toc-item" href="#s9"><span class="toc-num">9</span>補助事業KPI — 制度適合型設計</a>
+    <a class="toc-item" href="#s10"><span class="toc-num">10</span>補助金KPIの3戦略</a>
+    <a class="toc-item" href="#s11"><span class="toc-num">11</span>補助金KPI設計の具体手順</a>
+    <a class="toc-item" href="#s12"><span class="toc-num">12</span>実務テクニックとよくある誤解</a>
+    <a class="toc-item" href="#s13"><span class="toc-num">13</span>結論 — KPIの本質</a>
+  </div>
+</div>
+
+<!-- ═══════ S1: KPIとは何か ═══════ -->
+
+<section id="s1">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></span>
+    KPIとは何か — 基本構造
+  </h2>
+  <p>KPIは単なる「数値目標」ではありません。本質的には、<span class="hl">ある目的を達成するために、進捗や妥当性を継続的に観測するための指標</span>です。</p>
+  <p>KPIは常に単独で存在するのではなく、以下の構造の中に位置づきます。</p>
+
+  <div class="flow-chain">
+    <div class="flow-step">理念・目的</div>
+    <div class="flow-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="flow-step">KGI（最終目標）</div>
+    <div class="flow-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="flow-step">成功要因（CSF）</div>
+    <div class="flow-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="flow-step" style="background:var(--teal-dark);">KPI</div>
+    <div class="flow-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="flow-step">施策・行動</div>
+  </div>
+
+  <p>たとえば医療DXの文脈では以下のように展開します。</p>
+  <table class="axis-table">
+    <thead><tr><th>層</th><th>内容例</th></tr></thead>
+    <tbody>
+      <tr><td class="axis-label">理念</td><td>地域医療を持続可能にする</td></tr>
+      <tr><td class="axis-label">KGI</td><td>業務負担を減らしつつ医療の質を維持する</td></tr>
+      <tr><td class="axis-label">成功要因</td><td>業務の標準化、情報共有の迅速化、教育の定着</td></tr>
+      <tr><td class="axis-label">KPI</td><td>平均作業時間、利用率、教育完了率、再作業率</td></tr>
+      <tr><td class="axis-label">施策</td><td>アプリ導入、研修、業務フロー見直し</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p>KPIは<strong>目的そのものではなく、目的に至る過程を観測するための「代理的な窓」</strong>です。</p>
+    <p>この「代理」という性質が、KPIの多面性や限界の根本原因です。</p>
+  </div>
+</section>
+
+<!-- ═══════ S2: 6原則 ═══════ -->
+
+<section id="s2">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></span>
+    KPIの6つの原理原則
+  </h2>
+  <p>KPIを理解する上で外せない原理を6つ整理します。これらはすべてのKPI設計の土台です。</p>
+
+  <div class="principle-grid">
+    <div class="principle-card">
+      <div class="pc-num">01</div>
+      <div class="pc-title">
+        KPIはKGIから落とす
+        <span class="badge" style="background:var(--secondary);">構造</span>
+      </div>
+      <div class="pc-body">「何を測れるか」から入るのではなく、<span class="hl">「何を実現したいか」から逆算して設計する</span>のが原則。最終目標から降ろさなければ意味のない数値を追いかけることになります。</div>
+    </div>
+
+```
+<div class="principle-card">
+  <div class="pc-num">02</div>
+  <div class="pc-title">
+    KPIは因果仮説である
+    <span class="badge" style="background:var(--teal);">仮説</span>
+  </div>
+  <div class="pc-body">KPIは事実ではなく「この指標が改善すれば目的達成に近づくはずだ」という仮説です。したがって<span class="hl">KPI設計とは本質的には因果モデルの設計</span>です。</div>
+</div>
+
+<div class="principle-card">
+  <div class="pc-num">03</div>
+  <div class="pc-title">
+    KPIは代理指標である
+    <span class="badge" style="background:var(--accent);">限界</span>
+  </div>
+  <div class="pc-body">「医療の質」「組織学習」など本当に見たいものは直接測れないため代理指標を置きます。この時点でKPIには<span class="hl-warm">必ずズレが入る</span>ことを前提にする必要があります。</div>
+</div>
+
+<div class="principle-card">
+  <div class="pc-num">04</div>
+  <div class="pc-title">
+    KPIは行動を誘導する
+    <span class="badge" style="background:var(--red);">介入</span>
+  </div>
+  <div class="pc-body">指標は観測のためだけでなく、現場の行動を規定します。何をKPIに置くかで現場はそこに最適化する。KPIは<span class="hl-warm">測定装置であると同時に組織への介入装置</span>です。</div>
+</div>
+
+<div class="principle-card">
+  <div class="pc-num">05</div>
+  <div class="pc-title">
+    KPIには階層がある
+    <span class="badge" style="background:#8e44ad;">階層</span>
+  </div>
+  <div class="pc-body">結果指標・中間成果指標・活動指標・前提条件指標 — 少なくとも4つの層があります。これを混同するとKPI設計そのものが壊れます。</div>
+</div>
+
+<div class="principle-card">
+  <div class="pc-num">06</div>
+  <div class="pc-title">
+    KPIは文脈依存である
+    <span class="badge" style="background:#2c3e50;">文脈</span>
+  </div>
+  <div class="pc-body">同じ「良いKPI」でも、経営・現場改善・補助事業・プロダクト評価・研究・監査では意味が違います。文脈を無視して一般論だけで語ると実務で使えません。</div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ═══════ S3: KPIの5機能 ═══════ -->
+
+<section id="s3">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg></span>
+    KPIの5つの機能 — 多面性の根源
+  </h2>
+  <p>KPIが多面的になる根本原因は、KPIが満たすべき機能が複数あるからです。少なくとも以下の5つの機能を同時に担っています。</p>
+
+  <div class="func-grid">
+    <div class="func-card">
+      <div class="func-num">①</div>
+      <div class="func-title">進捗管理</div>
+      <div class="func-desc">計画どおり進んでいるかを見る<br>例：導入完了率、研修実施率</div>
+    </div>
+    <div class="func-card" style="background:linear-gradient(135deg,#16a085,#1abc9c);">
+      <div class="func-num">②</div>
+      <div class="func-title">成果検証</div>
+      <div class="func-desc">何がどれだけ改善したかを見る<br>例：作業時間削減率、エラー率</div>
+    </div>
+    <div class="func-card" style="background:linear-gradient(135deg,#8e44ad,#9b59b6);">
+      <div class="func-num">③</div>
+      <div class="func-title">意思決定</div>
+      <div class="func-desc">次にどこへ資源配分するかを判断<br>例：部署別利用率、ROI</div>
+    </div>
+    <div class="func-card" style="background:linear-gradient(135deg,#d35400,#e67e22);">
+      <div class="func-num">④</div>
+      <div class="func-title">説明責任</div>
+      <div class="func-desc">第三者への対外報告・監査対応<br>例：利用件数、削減時間</div>
+    </div>
+    <div class="func-card" style="background:linear-gradient(135deg,#c0392b,#e74c3c);">
+      <div class="func-num">⑤</div>
+      <div class="func-title">行動変容</div>
+      <div class="func-desc">現場を動かすための指標<br>例：週次入力率、レビュー完了率</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>これら5つの機能は<strong>しばしば一致しません</strong>。「本質的価値をよく表すKPI」が「監査に耐えやすいKPI」とは限らず、「説明しやすいKPI」が本質的効果を表していないこともあります。</p>
+    <p>したがってKPI設計ではまず<strong>「このKPIは何のために置くのか」</strong>を明確にしなければなりません。</p>
+  </div>
+</section>
+
+<!-- ═══════ S4: 5軸 ═══════ -->
+
+<section id="s4">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 9V3.5L18.5 9H13z"/></svg></span>
+    KPIを多面的に捉える5つの基本軸
+  </h2>
+
+  <table class="axis-table">
+    <thead>
+      <tr><th style="width:180px;">軸</th><th>分類</th><th>解説・緊張関係</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="axis-label">Lagging vs Leading</td>
+        <td><strong>遅行指標</strong>（収益、事故件数）<br><strong>先行指標</strong>（利用率、教育完了率）</td>
+        <td>結果指標だけでは遅すぎ、先行指標だけでは本質を見失う。<span class="hl">両方が必要</span></td>
+      </tr>
+      <tr>
+        <td class="axis-label">Outcome vs Output</td>
+        <td><strong>Outcome</strong>（時間削減、満足度向上）<br><strong>Output</strong>（件数、回数、導入数）</td>
+        <td>Outputは測りやすいが浅く、Outcomeは意味があるが難しい。<span class="hl">この緊張関係がKPI設計の中心</span></td>
+      </tr>
+      <tr>
+        <td class="axis-label">定量 vs 定性</td>
+        <td><strong>定量</strong>（件数、割合、時間、金額）<br><strong>定性</strong>（受容性、理解度、納得感）</td>
+        <td>KPIは定量中心だが、定性を切り捨てるとDXや組織変革で本質を落とす</td>
+      </tr>
+      <tr>
+        <td class="axis-label">現場最適 vs 経営最適</td>
+        <td><strong>現場</strong>（使いやすさ、手間削減）<br><strong>経営</strong>（費用対効果、継続可能性）</td>
+        <td>どの視点のKPIかを明確にしないとミスマッチが生じる</td>
+      </tr>
+      <tr>
+        <td class="axis-label">内的価値 vs 外的価値</td>
+        <td><strong>内的</strong>（本当に改善したいこと）<br><strong>外的</strong>（審査、監査、対外説明に必要なこと）</td>
+        <td>実務では<span class="hl-warm">両者を分けて設計するのが有効</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════ S5: 設計手順 ═══════ -->
+
+<section id="s5">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 17.93V18h-2v1.93A8.01 8.01 0 014.07 13H6v-2H4.07A8.01 8.01 0 0111 4.07V6h2V4.07A8.01 8.01 0 0119.93 11H18v2h1.93A8.01 8.01 0 0113 19.93z"/></svg></span>
+    KPI設計の標準手順（7 Step）
+  </h2>
+
+  <div class="step-timeline">
+    <div class="step-item">
+      <div class="step-marker"><div class="step-dot">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h4>目的を定義する</h4>
+        <p>「このプロジェクトは何を成功とみなすか」を言語化します。ここが曖昧だとその後の指標はすべて漂流します。</p>
+        <p>できるだけ<span class="hl">「誰にとって」「何が」「どうなることか」</span>まで明確にします。</p>
+        <p style="font-style:italic;color:var(--text-light);">例：「職員の事務作業負荷を減らし、医療の質を損なわずに業務継続性を高める」</p>
+      </div>
+    </div>
+
+```
+<div class="step-item">
+  <div class="step-marker"><div class="step-dot">2</div><div class="step-line"></div></div>
+  <div class="step-content">
+    <h4>成功要因を分解する</h4>
+    <p>目的に至るための主要因子を分解します。KPIツリーやロジックモデルの発想です。</p>
+    <p style="font-style:italic;color:var(--text-light);">例：システムが使われる → 業務フローに組み込まれる → 現場が使いこなせる → 時間が削減される → 品質が維持される</p>
+  </div>
+</div>
+
+<div class="step-item">
+  <div class="step-marker"><div class="step-dot">3</div><div class="step-line"></div></div>
+  <div class="step-content">
+    <h4>観測可能な指標を配置する</h4>
+    <p>各成功要因に対してKPI候補を出します。ここで初めて具体的な指標が登場します。</p>
+    <p style="font-style:italic;color:var(--text-light);">例：使われる→利用率 / 組み込まれる→使用比率 / 使いこなせる→教育完了率 / 時間削減→1件あたり処理時間</p>
+  </div>
+</div>
+
+<div class="step-item">
+  <div class="step-marker"><div class="step-dot">4</div><div class="step-line"></div></div>
+  <div class="step-content">
+    <h4>指標の性質を分類する</h4>
+    <p>各指標が「活動指標か」「出力指標か」「成果指標か」「結果指標か」「先行/遅行か」「説明責任向けか/内部改善向けか」を分類します。</p>
+    <p><span class="hl-warm">この分類をしないと、重要性の異なる指標が横並びになり、優先順位が混乱します。</span></p>
+  </div>
+</div>
+
+<div class="step-item">
+  <div class="step-marker"><div class="step-dot">5</div><div class="step-line"></div></div>
+  <div class="step-content">
+    <h4>測定可能性を点検する</h4>
+    <p>良い指標でも測れなければ使えません。以下を確認します：定義は明確か / データ取得方法はあるか / ベースラインは取れるか / 頻度は適切か / コストに見合うか / 人によって解釈がずれないか</p>
+  </div>
+</div>
+
+<div class="step-item">
+  <div class="step-marker"><div class="step-dot">6</div><div class="step-line"></div></div>
+  <div class="step-content">
+    <h4>目標値を設定する</h4>
+    <p>ここで初めて目標値を置きます。主に4つの考え方があります：現状比で改善幅を置く / ベンチマーク比較 / 達成可能性から置く / 戦略的に保守的or挑戦的に置く</p>
+    <p>目標値は理論だけでなく、<span class="hl">制度・監査・予算・期間</span>に依存します。</p>
+  </div>
+</div>
+
+<div class="step-item">
+  <div class="step-marker"><div class="step-dot">7</div><div class="step-line"></div></div>
+  <div class="step-content">
+    <h4>KPIセット全体のバランスを検証する</h4>
+    <p>単一指標ではなく、KPIの組み合わせとして妥当かを点検します。</p>
+    <p>OutputばかりでOutcomeがない / 結果指標ばかりで操作不能 / 定量ばかりで受容性不明 / 現場指標ばかりで経営視点なし — こうした<span class="hl-warm">偏りを修正</span>します。</p>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ═══════ S6: 文脈別 ═══════ -->
+
+<section id="s6">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-4v-7h4v7z"/></svg></span>
+    文脈別KPI設計パターン
+  </h2>
+  <p>文脈によって設計ロジックは大きく変わります。以下に6つの典型パターンを整理します。</p>
+
+  <div class="ctx-grid">
+    <!-- 業務改善 -->
+    <div class="ctx-card c1">
+      <div class="ctx-header">
+        <div class="ctx-icon"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.49.49 0 0014 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg></div>
+        <h4>業務改善型</h4>
+        <div class="ctx-num">01</div>
+      </div>
+      <div class="ctx-body">
+        <h5>基本ロジック</h5>
+        <p style="font-size:0.9rem;margin-bottom:10px;">時間・品質・負荷・再作業の4軸で設計</p>
+        <h5>典型指標</h5>
+        <ul>
+          <li>1件あたり処理時間</li>
+          <li>手戻り率・エラー率</li>
+          <li>待ち時間・工数・残業時間</li>
+          <li>標準手順遵守率</li>
+        </ul>
+        <div class="ctx-note">時間短縮だけをKPIにすると品質低下が起こるため、効率・品質・現場負荷をセットで設計する</div>
+      </div>
+    </div>
+
+```
+<!-- DX導入 -->
+<div class="ctx-card c2">
+  <div class="ctx-header">
+    <div class="ctx-icon"><svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v3H5z"/></svg></div>
+    <h4>DX導入型</h4>
+    <div class="ctx-num">02</div>
+  </div>
+  <div class="ctx-body">
+    <h5>基本ロジック</h5>
+    <p style="font-size:0.9rem;margin-bottom:10px;">導入→利用→定着→効果 の流れを追う</p>
+    <h5>典型指標</h5>
+    <ul>
+      <li>導入完了率・利用率</li>
+      <li>継続利用率・組込率</li>
+      <li>利用者満足度</li>
+      <li>作業時間削減率</li>
+    </ul>
+    <div class="ctx-note">初期は利用・定着の先行指標を重視し、中期以降に成果指標へ重心を移す設計が合理的</div>
+  </div>
+</div>
+
+<!-- 補助事業 -->
+<div class="ctx-card c3">
+  <div class="ctx-header">
+    <div class="ctx-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>
+    <h4>補助事業・政策対応型</h4>
+    <div class="ctx-num">03</div>
+  </div>
+  <div class="ctx-body">
+    <h5>基本ロジック</h5>
+    <p style="font-size:0.9rem;margin-bottom:10px;">政策目的との整合性・検証可能性・再現性</p>
+    <h5>典型指標</h5>
+    <ul>
+      <li>参加人数・導入件数・稼働率</li>
+      <li>削減時間・削減コスト</li>
+      <li>満足度・波及件数</li>
+      <li>他部署展開数</li>
+    </ul>
+    <div class="ctx-note">Outputで「やったこと」、Outcomeで「起きた変化」、Impactで「政策目的との接続」を三層で置く</div>
+  </div>
+</div>
+
+<!-- プロダクト -->
+<div class="ctx-card c4">
+  <div class="ctx-header">
+    <div class="ctx-icon"><svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg></div>
+    <h4>プロダクト・サービス評価型</h4>
+    <div class="ctx-num">04</div>
+  </div>
+  <div class="ctx-body">
+    <h5>基本ロジック</h5>
+    <p style="font-size:0.9rem;margin-bottom:10px;">利用されることと価値が出ることを分離して測る</p>
+    <h5>典型指標</h5>
+    <ul>
+      <li>MAU/WAU・継続率・離脱率</li>
+      <li>機能別利用率・タスク完遂率</li>
+      <li>NPS・満足度</li>
+      <li>有料継続率</li>
+    </ul>
+    <div class="ctx-note">獲得→利用→継続→効果 を別々に測る必要がある</div>
+  </div>
+</div>
+
+<!-- 組織変革 -->
+<div class="ctx-card c5">
+  <div class="ctx-header">
+    <div class="ctx-icon"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+    <h4>組織変革・人材育成型</h4>
+    <div class="ctx-num">05</div>
+  </div>
+  <div class="ctx-body">
+    <h5>基本ロジック</h5>
+    <p style="font-size:0.9rem;margin-bottom:10px;">能力形成・文化変化は遅く非線形。数値化が最も難しい</p>
+    <h5>典型指標</h5>
+    <ul>
+      <li>研修完了率・実務活用率</li>
+      <li>自走案件数・提案件数</li>
+      <li>改善サイクル実施率</li>
+      <li>スキル評価・自己効力感</li>
+    </ul>
+    <div class="ctx-note">学習→実践→自走→横展開 の階段を設計するのが有効</div>
+  </div>
+</div>
+
+<!-- 研究・実証 -->
+<div class="ctx-card c6">
+  <div class="ctx-header">
+    <div class="ctx-icon"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></div>
+    <h4>研究・実証型</h4>
+    <div class="ctx-num">06</div>
+  </div>
+  <div class="ctx-body">
+    <h5>基本ロジック</h5>
+    <p style="font-size:0.9rem;margin-bottom:10px;">「何が効いたか、効かなかったか」が分かることが重要</p>
+    <h5>典型指標</h5>
+    <ul>
+      <li>実証実施件数・条件別比較</li>
+      <li>効果量・実現可能性評価</li>
+      <li>継続意向</li>
+      <li>障害要因の抽出数</li>
+    </ul>
+    <div class="ctx-note">未達も価値。失敗から学べるよう、条件差や障壁抽出も指標として設計する</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ═══════ S7: 壊れるパターン ═══════ -->
+
+<section id="s7">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></span>
+    KPIが壊れる7つの典型パターン
+  </h2>
+
+  <div class="pitfall-list">
+    <div class="pitfall-item">
+      <div class="pitfall-badge">1</div>
+      <div class="pitfall-text"><strong>測りやすいものだけを測る</strong><p>結果、件数だけが増えて本質が見えなくなる</p></div>
+    </div>
+    <div class="pitfall-item">
+      <div class="pitfall-badge">2</div>
+      <div class="pitfall-text"><strong>結果指標だけを置く</strong><p>現場が何を改善すればよいか分からなくなる</p></div>
+    </div>
+    <div class="pitfall-item">
+      <div class="pitfall-badge">3</div>
+      <div class="pitfall-text"><strong>活動指標だけを置く</strong><p>「やった」で終わり、成果につながらない</p></div>
+    </div>
+    <div class="pitfall-item">
+      <div class="pitfall-badge">4</div>
+      <div class="pitfall-text"><strong>単一指標に依存する（Goodhartの法則）</strong><p>その数字だけを"作りにいく"最適化が起きる</p></div>
+    </div>
+    <div class="pitfall-item">
+      <div class="pitfall-badge">5</div>
+      <div class="pitfall-text"><strong>定義が曖昧</strong><p>後から「何を1件と数えるのか」で揉める</p></div>
+    </div>
+    <div class="pitfall-item">
+      <div class="pitfall-badge">6</div>
+      <div class="pitfall-text"><strong>ベースラインがない</strong><p>改善率が語れず、KPIの意味が事後的に失われる</p></div>
+    </div>
+    <div class="pitfall-item">
+      <div class="pitfall-badge">7</div>
+      <div class="pitfall-text"><strong>制御不能な指標を置く</strong><p>外部要因が大きすぎて評価不能になる</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S8: 5層モデル ═══════ -->
+
+<section id="s8">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span>
+    KPI設計の5層構造モデル
+  </h2>
+  <p>KPIを理解し設計するための最も汎用的な枠組みを、5つの層で整理します。この5層を分けて考えると、KPIの多面性を混乱せずに扱えます。</p>
+
+  <div class="layer-stack">
+    <div class="layer-item">
+      <div class="layer-label">第1層：目的</div>
+      <div class="layer-content">何を実現したいのか — KPI設計の出発点</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-label">第2層：成功要因</div>
+      <div class="layer-content">何が達成されれば、その目的に近づくのか — CSF分解</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-label">第3層：指標タイプ</div>
+      <div class="layer-content">その成功要因を、活動・出力・成果・結果のどこで観測するか</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-label">第4層：測定設計</div>
+      <div class="layer-content">どう測るか・いつ測るか・誰が測るか — 測定の実装</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-label">第5層：制度適合</div>
+      <div class="layer-content">現場改善用か・経営用か・補助事業用か・監査用か</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S9: 補助事業KPI ═══════ -->
+
+<section id="s9" class="subsidy-section">
+  <h2>
+    <span class="sec-icon" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></span>
+    補助事業KPI — 制度適合型設計
+  </h2>
+
+  <p>国の補助事業におけるKPIは一般的なDX論とは異なり、<span class="hl-warm">「評価される構造」を理解すること</span>が核心です。補助金KPIは実質的に以下の3条件を同時に満たす必要があります。</p>
+
+  <div class="principle-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="principle-card" style="border-top:4px solid var(--accent);">
+      <div class="pc-title" style="color:var(--accent-warm);">政策目的への整合性</div>
+      <div class="pc-body">地域医療維持、人材不足対策、効率化など — KPIは「政策の翻訳」である必要がある</div>
+    </div>
+    <div class="principle-card" style="border-top:4px solid var(--accent);">
+      <div class="pc-title" style="color:var(--accent-warm);">説明責任（アカウンタビリティ）</div>
+      <div class="pc-body">税金投入の正当化。第三者（審査官・会計検査院）が理解できること</div>
+    </div>
+    <div class="principle-card" style="border-top:4px solid var(--accent);">
+      <div class="pc-title" style="color:var(--accent-warm);">検証可能性（検査耐性）</div>
+      <div class="pc-body">数値として測定可能で再現可能。後から監査できること</div>
+    </div>
+  </div>
+
+  <div class="callout callout-accent">
+    <p>補助金KPIは「改善のため」ではなく<strong>「正当化・説明・検証のため」</strong>に設計される — ここが企業KPIや現場KPIと本質的に違う点です。</p>
+  </div>
+
+  <h3>ロジックモデル（補助事業の標準構造）</h3>
+  <p>ほぼすべての国系プロジェクトは、暗黙的にこの構造に従っています。</p>
+
+  <div class="logic-model">
+    <div class="lm-item lm1">
+      <div class="lm-label">Input</div>
+      <div class="lm-box">投入<br><small>人・金・設備</small><br><small style="opacity:0.7;">KPIにはしない</small></div>
+    </div>
+    <div class="lm-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="lm-item lm2">
+      <div class="lm-label">Activity</div>
+      <div class="lm-box">活動<br><small>研修実施・導入</small><br><small style="opacity:0.7;">やりました証明</small></div>
+    </div>
+    <div class="lm-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="lm-item lm3">
+      <div class="lm-label">Output</div>
+      <div class="lm-box">直接成果<br><small>利用回数・参加人数</small><br><small style="opacity:0.7;font-weight:700;">⭐ 主軸</small></div>
+    </div>
+    <div class="lm-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="lm-item lm4">
+      <div class="lm-label">Outcome</div>
+      <div class="lm-box">短中期効果<br><small>業務時間削減</small><br><small style="opacity:0.7;">やや難しいが必要</small></div>
+    </div>
+    <div class="lm-arrow"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+    <div class="lm-item lm5">
+      <div class="lm-label">Impact</div>
+      <div class="lm-box">最終価値<br><small>医療の質向上</small><br><small style="opacity:0.7;">ほぼ建前指標</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S10: 3戦略 ═══════ -->
+
+<section id="s10" class="subsidy-section">
+  <h2>
+    <span class="sec-icon" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));"><svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7a2.5 2.5 0 010-5 2.5 2.5 0 010 5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg></span>
+    補助金KPIの3つの戦略
+  </h2>
+
+  <div class="strat-grid">
+    <div class="strat-card">
+      <div class="strat-head">
+        <h4>① 保守型</h4>
+        <div class="strat-sub">確実達成型</div>
+      </div>
+      <div class="strat-body">
+        <dt>特徴</dt><dd>達成可能性重視、Output中心</dd>
+        <dt>例</dt><dd>研修実施回数、システム利用件数</dd>
+        <dt>メリット</dt><dd>返還リスク低い、審査通りやすい</dd>
+        <dt>デメリット</dt><dd>本質的価値が弱い</dd>
+      </div>
+    </div>
+    <div class="strat-card">
+      <div class="strat-head">
+        <h4>② バランス型</h4>
+        <div class="strat-sub">推奨</div>
+      </div>
+      <div class="strat-body">
+        <dt>特徴</dt><dd>Output＋Outcomeの組み合わせ</dd>
+        <dt>例</dt><dd>AI利用率（Output）＋業務時間削減（Outcome）</dd>
+        <dt>メリット</dt><dd>説得力と実現性のバランス</dd>
+        <dt>デメリット</dt><dd>設計の手間がやや多い</dd>
+      </div>
+      <div class="strat-rec" style="background:#e0f2f1;color:var(--teal-dark);">✦ 補助金では基本このバランス型が最適解</div>
+    </div>
+    <div class="strat-card">
+      <div class="strat-head">
+        <h4>③ 野心型</h4>
+        <div class="strat-sub">リスク高</div>
+      </div>
+      <div class="strat-body">
+        <dt>特徴</dt><dd>Outcome・Impact中心</dd>
+        <dt>例</dt><dd>医療事故減少率</dd>
+        <dt>メリット</dt><dd>成功時のインパクト大</dd>
+        <dt>デメリット</dt><dd>外乱が多く未達リスク高い</dd>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S11: 補助金設計手順 ═══════ -->
+
+<section id="s11" class="subsidy-section">
+  <h2>
+    <span class="sec-icon" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></span>
+    補助金KPI設計の具体手順
+  </h2>
+
+  <div class="step-timeline">
+    <div class="step-item">
+      <div class="step-marker"><div class="step-dot" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));">1</div><div class="step-line" style="background:linear-gradient(180deg,var(--accent),var(--border));"></div></div>
+      <div class="step-content">
+        <h4>政策文書の読み替え</h4>
+        <p>公募要領・評価項目・審査基準から「求められている成果」を抽出。政策意図を正確に読み取ることがKPI設計の起点です。</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-marker"><div class="step-dot" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));">2</div><div class="step-line" style="background:linear-gradient(180deg,var(--accent),var(--border));"></div></div>
+      <div class="step-content">
+        <h4>ロジックモデル化</h4>
+        <p>因果関係を整理。例：AI導入 → 利用増 → 業務効率化 → 医療提供維持</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-marker"><div class="step-dot" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));">3</div><div class="step-line" style="background:linear-gradient(180deg,var(--accent),var(--border));"></div></div>
+      <div class="step-content">
+        <h4>各層にKPIを配置</h4>
+        <p>Activity / Output / Outcome の各層にバランスよく指標を置く</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-marker"><div class="step-dot" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));">4</div><div class="step-line" style="background:linear-gradient(180deg,var(--accent),var(--border));"></div></div>
+      <div class="step-content">
+        <h4>測定方法の設計</h4>
+        <p>データ取得方法・定義・頻度を明確化。<span class="hl-warm">ここが甘いと即アウト。</span></p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-marker"><div class="step-dot" style="background:linear-gradient(135deg,var(--accent-warm),var(--accent));">5</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h4>達成確率の調整</h4>
+        <p>現実的な数値に調整し、バッファを持たせる。保守的すぎず野心的すぎないラインを設定。</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>補助金KPIの「良い設計」5条件</h3>
+  <table class="axis-table">
+    <thead><tr><th>条件</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="axis-label">シンプル</td><td>複雑すぎない。誰でも理解できる</td></tr>
+      <tr><td class="axis-label">トレーサブル</td><td>データの出所が明確で追跡可能</td></tr>
+      <tr><td class="axis-label">再現可能</td><td>測定方法が客観的で第三者が再現できる</td></tr>
+      <tr><td class="axis-label">過去データと接続</td><td>ベースラインがあり改善度を語れる</td></tr>
+      <tr><td class="axis-label">政策に言い換え可能</td><td>業務効率化→「人材不足対応」、AI活用→「デジタル化推進」のように政策言語に接続できる</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════ S12: テクニック＋誤解 ═══════ -->
+
+<section id="s12">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></span>
+    実務テクニックとよくある誤解
+  </h2>
+
+  <h3>実務テクニック 5選</h3>
+
+  <div class="tech-list">
+    <div class="tech-item">
+      <div class="tech-num">1</div>
+      <div class="tech-text"><strong>KPIは"ストーリー"で設計する</strong> — 単独指標ではなく「活動→利用→効果」という因果の流れを作ることで、KPIセット全体に説得力が生まれる</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-num">2</div>
+      <div class="tech-text"><strong>Proxy（代理指標）を戦略的に使う</strong> — 本当は測れないものを代替する。例：医療の質→再入院率、安全性→インシデント報告率</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-num">3</div>
+      <div class="tech-text"><strong>"確実に伸びる指標"を混ぜる</strong> — 利用回数・参加率など、成果の底支えとなる指標を組み込むことで全体の達成率を安定させる</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-num">4</div>
+      <div class="tech-text"><strong>定義を事前に固定する</strong> — 「利用」とは何か？「1回」とは？ — 後で揉める最大ポイントを先に潰す</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-num">5</div>
+      <div class="tech-text"><strong>外部要因を排除する</strong> — KPIが自分たちでコントロールできるかを事前に確認。制御不能な指標はリスクになる</div>
+    </div>
+  </div>
+
+  <h3>よくある3つの誤解</h3>
+
+  <div class="misconception">
+    <div>
+      <span class="mis-badge mis-wrong">誤解</span>
+    </div>
+    <div class="mis-text">
+      <span class="wrong">「本質KPIだけが正しい」</span><br>
+      → 現実では成立しません。測れるKPIと意味のあるKPIを組み合わせる必要があります。
+    </div>
+  </div>
+  <div class="misconception">
+    <div>
+      <span class="mis-badge mis-wrong">誤解</span>
+    </div>
+    <div class="mis-text">
+      <span class="wrong">「測りやすいKPIはダメ」</span><br>
+      → むしろ必要です。測りやすいKPIは底支えとして不可欠であり、問題はそれ「だけ」に頼ること。
+    </div>
+  </div>
+  <div class="misconception">
+    <div>
+      <span class="mis-badge mis-wrong">誤解</span>
+    </div>
+    <div class="mis-text">
+      <span class="wrong">「KPIは客観的」</span><br>
+      → KPIは設計されたものであり、必ず恣意性を持ちます。KPIは<span class="hl">「現実の縮約モデル」であり、必ず歪みを持つ</span>という前提で向き合うべきです。
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ S13: 結論 ═══════ -->
+
+<section id="s13">
+  <h2>
+    <span class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></span>
+    結論 — KPIの本質
+  </h2>
+
+  <p>KPIをめぐる混乱の原因は、KPIを「正しい数値目標」と見なしてしまうことです。実際にはそうではありません。</p>
+
+  <div class="callout" style="margin:28px 0;">
+    <p style="font-size:1.15rem;line-height:1.8;">KPIとは、<strong>目的達成を観測し、行動を導き、第三者に説明するために設計された、文脈依存の代理指標の体系</strong>です。</p>
+  </div>
+
+  <p>したがって、KPIの正しさは絶対的ではありません。問うべきなのはいつも以下の4つです。</p>
+
+  <div class="principle-grid" style="grid-template-columns:repeat(2,1fr);">
+    <div class="principle-card" style="border-left:4px solid var(--secondary);border-top:none;">
+      <div class="pc-title" style="font-size:1.1rem;">何のためのKPIか</div>
+      <div class="pc-body">進捗管理か、成果検証か、説明責任か、行動変容か</div>
+    </div>
+    <div class="principle-card" style="border-left:4px solid var(--teal);border-top:none;">
+      <div class="pc-title" style="font-size:1.1rem;">誰に対するKPIか</div>
+      <div class="pc-body">現場か、経営か、審査官か、出資者か</div>
+    </div>
+    <div class="principle-card" style="border-left:4px solid var(--accent);border-top:none;">
+      <div class="pc-title" style="font-size:1.1rem;">どの因果仮説に基づくKPIか</div>
+      <div class="pc-body">何が改善すれば目的に近づくという仮説なのか</div>
+    </div>
+    <div class="principle-card" style="border-left:4px solid var(--red);border-top:none;">
+      <div class="pc-title" style="font-size:1.1rem;">どの限界を持つKPIか</div>
+      <div class="pc-body">代理指標としてのズレはどこにあるか</div>
+    </div>
+  </div>
+
+  <h3>補助金KPIの最適構造</h3>
+  <div class="layer-stack" style="margin-top:16px;">
+    <div class="layer-item">
+      <div class="layer-label" style="background:var(--accent-warm);border-radius:10px 0 0 0;">Output</div>
+      <div class="layer-content" style="background:#fef3e2;border-radius:0 10px 0 0;font-weight:700;">確実性を担保する — やったことの証明</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-label" style="background:var(--teal-dark);">Outcome</div>
+      <div class="layer-content" style="background:#e0f2f1;font-weight:700;">意味を補強する — 起きた変化の可視化</div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-label" style="background:#8e44ad;border-radius:0 0 0 10px;">Impact</div>
+      <div class="layer-content" style="background:#ede7f6;border-radius:0 0 10px 0;font-weight:700;">政策整合を示す — 理念との接続</div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:32px;background:linear-gradient(135deg,#1e2a38 0%,#2c3e50 100%);">
+    <p style="font-size:1.1rem;text-align:center;">一言でまとめると —</p>
+    <p style="font-size:1.25rem;text-align:center;font-weight:700;margin:0;"><strong style="color:var(--teal);">「測れるもの」と「意味のあるもの」を分離し、<br>それを因果でつなぐのがKPI設計</strong></p>
+  </div>
+
+  <p style="margin-top:28px;">この整理ができると、補助事業であれ、業務改善であれ、DXであれ、設計の仕方を意識的に変えられるようになります。</p>
+</section>
+
+</div><!-- /container -->
+
+<footer>
+  <div class="container">
+    KPI設計の全体像 — 原理原則から実務設計・制度対応まで
+  </div>
+</footer>
+
+</body>
+</html>
