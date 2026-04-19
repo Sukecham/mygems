@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>myGEMS 案件帖</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="案件帖">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f8f5ef">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📓%3C/text%3E%3C/svg%3E">
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f8f5ef;
+    font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+    color: #2a2722;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .font-mincho { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+  /* iOS safe area */
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+</style>
+
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+"use strict";
+
+const {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
+
+// ============================================================
+// 定数
+// ============================================================
+const CATEGORIES = ['医療機関', '出版', 'システム企業', '地域・自治体', '講演・執筆', '社内運営', 'その他'];
+const PRIORITIES = ['高', '中', '低'];
+const STATUSES = ['未着手', '進行中', 'レビュー待ち', '完了', '保留'];
+const TYPES = ['継続', '単発'];
+const LS_API_URL = 'mygems:apiUrl';
+
+// ============================================================
+// ヘルパー
+// ============================================================
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const formatDate = s => {
+  if (!s) return '';
+  const str = String(s).slice(0, 10);
+  const parts = str.split('-');
+  if (parts.length < 3) return str;
+  return `${Number(parts[1])}月${Number(parts[2])}日`;
+};
+const normalizeDate = s => {
+  if (!s) return '';
+  const str = String(s);
+  // ISO形式や日付オブジェクトの文字列化にも対応
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const daysUntil = dateStr => {
+  if (!dateStr) return null;
+  const today = new Date(todayStr());
+  const target = new Date(normalizeDate(dateStr));
+  return Math.round((target - today) / (1000 * 60 * 60 * 24));
+};
+const todayHeader = () => {
+  const d = new Date();
+  const wd = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${wd[d.getDay()]})`;
+};
+
+// ============================================================
+// アイコン(インラインSVG)
+// ============================================================
+const Svg = _ref => {
+  let {
+    children,
+    className = "w-5 h-5"
+  } = _ref;
+  return /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    className: className
+  }, children);
+};
+const Icon = {
+  Plus: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "5",
+    x2: "12",
+    y2: "19"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "5",
+    y1: "12",
+    x2: "19",
+    y2: "12"
+  })),
+  Users: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("path", {
+    d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "9",
+    cy: "7",
+    r: "4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M23 21v-2a4 4 0 0 0-3-3.87"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M16 3.13a4 4 0 0 1 0 7.75"
+  })),
+  Calendar: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "4",
+    width: "18",
+    height: "18",
+    rx: "2",
+    ry: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "16",
+    y1: "2",
+    x2: "16",
+    y2: "6"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "8",
+    y1: "2",
+    x2: "8",
+    y2: "6"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "3",
+    y1: "10",
+    x2: "21",
+    y2: "10"
+  })),
+  Trash: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("polyline", {
+    points: "3 6 5 6 21 6"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M10 11v6"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M14 11v6"
+  })),
+  Check: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("polyline", {
+    points: "20 6 9 17 4 12"
+  })),
+  X: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("line", {
+    x1: "18",
+    y1: "6",
+    x2: "6",
+    y2: "18"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "6",
+    y1: "6",
+    x2: "18",
+    y2: "18"
+  })),
+  Chevron: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("polyline", {
+    points: "15 18 9 12 15 6"
+  })),
+  Download: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("path", {
+    d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "7 10 12 15 17 10"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "15",
+    x2: "12",
+    y2: "3"
+  })),
+  Upload: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("path", {
+    d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "17 8 12 3 7 8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "3",
+    x2: "12",
+    y2: "15"
+  })),
+  Alert: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "10"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "8",
+    x2: "12",
+    y2: "12"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "16",
+    x2: "12.01",
+    y2: "16"
+  })),
+  Circle: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "10"
+  })),
+  Clock: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "10"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "12 6 12 12 16 14"
+  })),
+  Pause: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("rect", {
+    x: "6",
+    y: "4",
+    width: "4",
+    height: "16"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "14",
+    y: "4",
+    width: "4",
+    height: "16"
+  })),
+  Edit: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("path", {
+    d: "M12 20h9"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+  })),
+  Cog: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "3"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+  }))
+};
+
+// ============================================================
+// API層(Google Apps Script)
+// ============================================================
+async function apiGet(apiUrl) {
+  const res = await fetch(apiUrl, {
+    method: 'GET',
+    redirect: 'follow'
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
+    throw new Error('API応答がJSONではありません:' + text.slice(0, 160));
+  }
+  if (parsed.error) throw new Error(parsed.error);
+  if (!Array.isArray(parsed.clients) || !Array.isArray(parsed.tasks)) {
+    throw new Error('期待した形式ではありません');
+  }
+  return parsed;
+}
+async function apiSave(apiUrl, data) {
+  const res = await fetch(apiUrl, {
+    method: 'POST',
+    // text/plainはCORSプリフライトを避けるための重要設定
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify(data),
+    redirect: 'follow'
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
+    throw new Error('API応答がJSONではありません:' + text.slice(0, 160));
+  }
+  if (!parsed.ok) throw new Error(parsed.error || '保存失敗');
+  return parsed;
+}
+
+// ============================================================
+// ルート:URLがない時はSetup、あればメインアプリ
+// ============================================================
+function App() {
+  const [apiUrl, setApiUrl] = useState(() => localStorage.getItem(LS_API_URL) || '');
+  if (!apiUrl) {
+    return /*#__PURE__*/React.createElement(Setup, {
+      onComplete: url => {
+        localStorage.setItem(LS_API_URL, url);
+        setApiUrl(url);
+      }
+    });
+  }
+  return /*#__PURE__*/React.createElement(Main, {
+    apiUrl: apiUrl,
+    onReset: () => {
+      if (confirm('保存先URLをリセットして初期設定に戻ります。データ自体はスプレッドシートに残ります。続行しますか?')) {
+        localStorage.removeItem(LS_API_URL);
+        setApiUrl('');
+      }
+    }
+  });
+}
+
+// ============================================================
+// 初期設定画面
+// ============================================================
+function Setup(_ref2) {
+  let {
+    onComplete
+  } = _ref2;
+  const [url, setUrl] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState('');
+  async function handleConnect() {
+    setError('');
+    const trimmed = url.trim();
+    if (!trimmed.startsWith('https://script.google.com/macros/s/')) {
+      setError('URLの形式が違います。「https://script.google.com/macros/s/...」で始まるURLを貼り付けてください');
+      return;
+    }
+    setTesting(true);
+    try {
+      await apiGet(trimmed);
+      onComplete(trimmed);
+    } catch (e) {
+      setError('接続に失敗しました:' + (e.message || e));
+    }
+    setTesting(false);
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex items-center justify-center p-5",
+    style: {
+      background: 'linear-gradient(180deg,#f8f5ef 0%,#f2ede2 100%)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-md w-full bg-white/80 rounded-2xl p-6 border border-stone-300 shadow-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] tracking-[0.3em] text-stone-500 mb-1"
+  }, "MY GEMS"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl mb-1 font-mincho",
+    style: {
+      fontWeight: 600
+    }
+  }, "\u6848\u4EF6\u5E16"), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-stone-500 mb-5"
+  }, "\u2014 \u521D\u671F\u8A2D\u5B9A"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-stone-700 mb-3 leading-relaxed"
+  }, "Google Apps Script\u3067\u30C7\u30D7\u30ED\u30A4\u3057\u305F\u30A6\u30A7\u30D6\u30A2\u30D7\u30EA\u306EURL(\u672B\u5C3E\u304C ", /*#__PURE__*/React.createElement("code", {
+    className: "text-xs bg-stone-100 px-1"
+  }, "/exec"), ")\u3092\u8CBC\u308A\u4ED8\u3051\u3066\u304F\u3060\u3055\u3044\u3002"), /*#__PURE__*/React.createElement("textarea", {
+    value: url,
+    onChange: e => setUrl(e.target.value),
+    placeholder: "https://script.google.com/macros/s/AKfy.../exec",
+    className: "w-full p-3 rounded-lg border border-stone-300 text-xs font-mono resize-none h-24 bg-white"
+  }), error && /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-900 text-xs whitespace-pre-wrap"
+  }, error), /*#__PURE__*/React.createElement("button", {
+    onClick: handleConnect,
+    disabled: testing || !url.trim(),
+    className: "w-full mt-4 py-3 rounded-lg text-white disabled:opacity-40 transition",
+    style: {
+      background: '#1f3a5f'
+    }
+  }, testing ? '接続中…' : '接続して始める'), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-[11px] text-stone-500 leading-relaxed"
+  }, "\u203B \u3053\u306EURL\u306F\u3053\u306E\u7AEF\u672B\u306ESafari\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002\u4ED6\u306E\u30D6\u30E9\u30A6\u30B6/\u7AEF\u672B\u3067\u306F\u518D\u5165\u529B\u304C\u5FC5\u8981\u3067\u3059\u3002")));
+}
+
+// ============================================================
+// メインアプリ
+// ============================================================
+function Main(_ref3) {
+  let {
+    apiUrl,
+    onReset
+  } = _ref3;
+  const [data, setData] = useState({
+    clients: [],
+    tasks: []
+  });
+  const [loadState, setLoadState] = useState('loading'); // loading, ready, error
+  const [loadError, setLoadError] = useState('');
+  const [view, setView] = useState('briefing');
+  const [selectedClientId, setSelectedClientId] = useState(null);
+  const [clientFilter, setClientFilter] = useState('all');
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [saveStatus, setSaveStatus] = useState({
+    kind: 'idle',
+    at: null
+  });
+  useEffect(() => {
+    loadData();
+  }, []);
+  async function loadData() {
+    setLoadState('loading');
+    try {
+      const result = await apiGet(apiUrl);
+      // 日付文字列を正規化
+      result.tasks = result.tasks.map(t => ({
+        ...t,
+        dueDate: normalizeDate(t.dueDate)
+      }));
+      setData(result);
+      setLoadState('ready');
+      setSaveStatus({
+        kind: 'saved',
+        at: Date.now()
+      });
+    } catch (e) {
+      setLoadError(String(e.message || e));
+      setLoadState('error');
+    }
+  }
+  async function persist(next) {
+    let attempt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    setData(next);
+    setSaveStatus({
+      kind: 'saving',
+      at: Date.now()
+    });
+    try {
+      await apiSave(apiUrl, next);
+      setSaveStatus({
+        kind: 'saved',
+        at: Date.now()
+      });
+    } catch (e) {
+      console.error('save error:', e);
+      if (attempt < 1) {
+        setTimeout(() => persist(next, attempt + 1), 800);
+        return;
+      }
+      setSaveStatus({
+        kind: 'error',
+        at: Date.now(),
+        message: String(e.message || e)
+      });
+      showToast('保存失敗。通信を確認してください', 'error');
+    }
+  }
+  function showToast(msg) {
+    let kind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'ok';
+    setToast({
+      msg,
+      kind
+    });
+    setTimeout(() => setToast(null), 2400);
+  }
+
+  // ---- CRUD ----
+  function saveClient(payload) {
+    const next = {
+      ...data
+    };
+    if (payload.id) {
+      next.clients = next.clients.map(c => c.id === payload.id ? {
+        ...c,
+        ...payload
+      } : c);
+      showToast('案件を更新しました');
+    } else {
+      next.clients = [...next.clients, {
+        ...payload,
+        id: uid(),
+        createdAt: Date.now()
+      }];
+      showToast('案件を追加しました');
+    }
+    persist(next);
+  }
+  function deleteClient(id) {
+    if (!confirm('この案件と関連タスクを全て削除します。よろしいですか?')) return;
+    persist({
+      clients: data.clients.filter(c => c.id !== id),
+      tasks: data.tasks.filter(t => t.clientId !== id)
+    });
+    setSelectedClientId(null);
+    setView('clients');
+    showToast('削除しました');
+  }
+  function saveTask(payload) {
+    const next = {
+      ...data
+    };
+    if (payload.id) {
+      next.tasks = next.tasks.map(t => t.id === payload.id ? {
+        ...t,
+        ...payload
+      } : t);
+      showToast('タスクを更新しました');
+    } else {
+      next.tasks = [...next.tasks, {
+        ...payload,
+        id: uid(),
+        createdAt: Date.now()
+      }];
+      showToast('タスクを追加しました');
+    }
+    persist(next);
+  }
+  function deleteTask(id) {
+    persist({
+      ...data,
+      tasks: data.tasks.filter(t => t.id !== id)
+    });
+    showToast('削除しました');
+  }
+  function toggleComplete(id) {
+    persist({
+      ...data,
+      tasks: data.tasks.map(t => t.id === id ? {
+        ...t,
+        status: t.status === '完了' ? '未着手' : '完了'
+      } : t)
+    });
+  }
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mygems-backup-${todayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('バックアップを書き出しました');
+  }
+
+  // ---- 状態分岐 ----
+  if (loadState === 'loading') {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "min-h-screen flex items-center justify-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-stone-500 tracking-widest"
+    }, "\u8AAD\u307F\u8FBC\u307F\u4E2D\u2026"));
+  }
+  if (loadState === 'error') {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "min-h-screen flex items-center justify-center p-5"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "max-w-md w-full bg-white/80 rounded-2xl p-6 border border-red-300"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-red-800 font-medium mb-2"
+    }, "\u63A5\u7D9A\u30A8\u30E9\u30FC"), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs text-stone-700 whitespace-pre-wrap mb-4"
+    }, loadError), /*#__PURE__*/React.createElement("div", {
+      className: "flex gap-2"
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: loadData,
+      className: "flex-1 py-2 rounded-lg text-white",
+      style: {
+        background: '#1f3a5f'
+      }
+    }, "\u518D\u8A66\u884C"), /*#__PURE__*/React.createElement("button", {
+      onClick: onReset,
+      className: "flex-1 py-2 rounded-lg border border-stone-300 bg-white"
+    }, "URL\u3092\u30EA\u30BB\u30C3\u30C8"))));
+  }
+
+  // ---- 集計 ----
+  const incomplete = data.tasks.filter(t => t.status !== '完了');
+  const today = todayStr();
+  const overdue = incomplete.filter(t => t.dueDate && t.dueDate < today).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const dueToday = incomplete.filter(t => t.dueDate === today);
+  const dueThisWeek = incomplete.filter(t => {
+    if (!t.dueDate || t.dueDate <= today) return false;
+    const d = daysUntil(t.dueDate);
+    return d > 0 && d <= 7;
+  }).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const highPriority = incomplete.filter(t => t.priority === '高' && !overdue.includes(t) && !dueToday.includes(t));
+  const visibleClients = data.clients.filter(c => {
+    if (clientFilter === 'all') return true;
+    if (clientFilter === '継続' || clientFilter === '単発') return c.type === clientFilter;
+    return c.category === clientFilter;
+  });
+  const selectedClient = data.clients.find(c => c.id === selectedClientId);
+  const clientTasks = selectedClient ? data.tasks.filter(t => t.clientId === selectedClientId) : [];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen pb-28 safe-bottom",
+    style: {
+      background: 'linear-gradient(180deg,#f8f5ef 0%,#f2ede2 100%)'
+    }
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "px-5 pt-8 pb-4 border-b border-stone-300/60"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] tracking-[0.3em] text-stone-500 mb-1"
+  }, "MY GEMS"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl font-mincho",
+    style: {
+      fontWeight: 600,
+      letterSpacing: '0.02em'
+    }
+  }, "\u6848\u4EF6\u5E16"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-stone-500 mt-2 flex items-center gap-2 flex-wrap"
+  }, /*#__PURE__*/React.createElement("span", null, todayHeader()), /*#__PURE__*/React.createElement(SaveIndicator, {
+    status: saveStatus
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: exportJSON,
+    className: "w-9 h-9 rounded-full bg-white/70 border border-stone-300 flex items-center justify-center",
+    title: "JSON\u30D0\u30C3\u30AF\u30A2\u30C3\u30D7"
+  }, /*#__PURE__*/React.createElement(Icon.Download, {
+    className: "w-4 h-4 text-stone-600"
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: onReset,
+    className: "w-9 h-9 rounded-full bg-white/70 border border-stone-300 flex items-center justify-center",
+    title: "URL\u8A2D\u5B9A"
+  }, /*#__PURE__*/React.createElement(Icon.Cog, {
+    className: "w-4 h-4 text-stone-600"
+  }))))), /*#__PURE__*/React.createElement("main", {
+    className: "px-5 py-6"
+  }, view === 'briefing' && /*#__PURE__*/React.createElement(Briefing, {
+    overdue: overdue,
+    dueToday: dueToday,
+    dueThisWeek: dueThisWeek,
+    highPriority: highPriority,
+    clients: data.clients,
+    onTaskClick: t => setModal({
+      type: 'task',
+      mode: 'edit',
+      payload: t
+    }),
+    onToggle: toggleComplete,
+    onAddTask: () => setModal({
+      type: 'task',
+      mode: 'add',
+      payload: {}
+    }),
+    onAddClient: () => setModal({
+      type: 'client',
+      mode: 'add',
+      payload: {}
+    }),
+    hasClients: data.clients.length > 0
+  }), view === 'clients' && !selectedClient && /*#__PURE__*/React.createElement(ClientsList, {
+    clients: visibleClients,
+    tasks: data.tasks,
+    filter: clientFilter,
+    setFilter: setClientFilter,
+    onSelect: id => setSelectedClientId(id),
+    onAdd: () => setModal({
+      type: 'client',
+      mode: 'add',
+      payload: {}
+    })
+  }), view === 'clients' && selectedClient && /*#__PURE__*/React.createElement(ClientDetail, {
+    client: selectedClient,
+    tasks: clientTasks,
+    onBack: () => setSelectedClientId(null),
+    onEditClient: () => setModal({
+      type: 'client',
+      mode: 'edit',
+      payload: selectedClient
+    }),
+    onDeleteClient: () => deleteClient(selectedClient.id),
+    onAddTask: () => setModal({
+      type: 'task',
+      mode: 'add',
+      payload: {
+        clientId: selectedClient.id
+      }
+    }),
+    onEditTask: t => setModal({
+      type: 'task',
+      mode: 'edit',
+      payload: t
+    }),
+    onToggle: toggleComplete
+  })), /*#__PURE__*/React.createElement("nav", {
+    className: "fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-stone-300/60 px-2 py-2 flex justify-around items-center safe-bottom"
+  }, /*#__PURE__*/React.createElement(NavBtn, {
+    active: view === 'briefing',
+    icon: /*#__PURE__*/React.createElement(Icon.Calendar, null),
+    label: "\u672C\u65E5",
+    onClick: () => {
+      setView('briefing');
+      setSelectedClientId(null);
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      if (view === 'clients' && selectedClient) setModal({
+        type: 'task',
+        mode: 'add',
+        payload: {
+          clientId: selectedClient.id
+        }
+      });else setModal({
+        type: 'task',
+        mode: 'add',
+        payload: {}
+      });
+    },
+    className: "w-14 h-14 rounded-full flex items-center justify-center -mt-5 shadow-lg",
+    style: {
+      background: '#1f3a5f',
+      color: '#f8f5ef'
+    }
+  }, /*#__PURE__*/React.createElement(Icon.Plus, {
+    className: "w-6 h-6"
+  })), /*#__PURE__*/React.createElement(NavBtn, {
+    active: view === 'clients',
+    icon: /*#__PURE__*/React.createElement(Icon.Users, null),
+    label: "\u6848\u4EF6",
+    onClick: () => {
+      setView('clients');
+      setSelectedClientId(null);
+    }
+  })), modal && modal.type === 'client' && /*#__PURE__*/React.createElement(ClientModal, {
+    client: modal.payload,
+    mode: modal.mode,
+    onSave: c => {
+      saveClient(c);
+      setModal(null);
+    },
+    onClose: () => setModal(null)
+  }), modal && modal.type === 'task' && /*#__PURE__*/React.createElement(TaskModal, {
+    task: modal.payload,
+    mode: modal.mode,
+    clients: data.clients,
+    onSave: t => {
+      saveTask(t);
+      setModal(null);
+    },
+    onDelete: id => {
+      deleteTask(id);
+      setModal(null);
+    },
+    onClose: () => setModal(null)
+  }), toast && /*#__PURE__*/React.createElement("div", {
+    className: `fixed bottom-28 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full text-sm shadow-lg z-50 ${toast.kind === 'error' ? 'bg-red-900 text-white' : 'bg-stone-800 text-stone-50'}`
+  }, toast.msg));
+}
+
+// ============================================================
+// 小コンポーネント
+// ============================================================
+function NavBtn(_ref4) {
+  let {
+    active,
+    icon,
+    label,
+    onClick
+  } = _ref4;
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    className: `flex flex-col items-center gap-0.5 px-3 py-1 ${active ? 'text-stone-900' : 'text-stone-500'}`
+  }, icon, /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] tracking-wider"
+  }, label));
+}
+function SaveIndicator(_ref5) {
+  let {
+    status
+  } = _ref5;
+  if (status.kind === 'idle') return null;
+  if (status.kind === 'saving') return /*#__PURE__*/React.createElement("span", {
+    className: "text-stone-400"
+  }, "\u4FDD\u5B58\u4E2D\u2026");
+  if (status.kind === 'error') return /*#__PURE__*/React.createElement("span", {
+    className: "text-red-800"
+  }, "\u26A0 \u4FDD\u5B58\u5931\u6557");
+  if (status.kind === 'saved' && status.at) {
+    const d = new Date(status.at);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return /*#__PURE__*/React.createElement("span", {
+      className: "text-emerald-800/70"
+    }, "\u2713 \u4FDD\u5B58\u6E08 ", hh, ":", mm);
+  }
+  return null;
+}
+function Stat(_ref6) {
+  let {
+    label,
+    value,
+    accent
+  } = _ref6;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mincho",
+    style: {
+      color: accent,
+      fontWeight: 500
+    }
+  }, value), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] tracking-widest text-stone-500 mt-1"
+  }, label));
+}
+function Section(_ref7) {
+  let {
+    title,
+    accent,
+    children
+  } = _ref7;
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 mb-3 px-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-1 h-4",
+    style: {
+      background: accent
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs tracking-[0.2em] text-stone-700"
+  }, title)), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, children));
+}
+function TaskRow(_ref8) {
+  let {
+    task,
+    client,
+    onClick,
+    onToggle,
+    showOverdue
+  } = _ref8;
+  const priCol = {
+    '高': '#8b1a1a',
+    '中': '#a0522d',
+    '低': '#6b7280'
+  }[task.priority] || '#6b7280';
+  const statusIcon = {
+    '未着手': /*#__PURE__*/React.createElement(Icon.Circle, {
+      className: "w-3 h-3"
+    }),
+    '進行中': /*#__PURE__*/React.createElement(Icon.Clock, {
+      className: "w-3 h-3"
+    }),
+    'レビュー待ち': /*#__PURE__*/React.createElement(Icon.Alert, {
+      className: "w-3 h-3"
+    }),
+    '保留': /*#__PURE__*/React.createElement(Icon.Pause, {
+      className: "w-3 h-3"
+    }),
+    '完了': /*#__PURE__*/React.createElement(Icon.Check, {
+      className: "w-3 h-3"
+    })
+  }[task.status];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start gap-3 p-3 rounded-xl border border-stone-300/60 bg-white/70"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onToggle,
+    className: "mt-1 w-5 h-5 rounded-full border-2 border-stone-400 flex items-center justify-center flex-shrink-0"
+  }, task.status === '完了' && /*#__PURE__*/React.createElement(Icon.Check, {
+    className: "w-3 h-3 text-stone-700"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-w-0",
+    onClick: onClick
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 flex-wrap"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-1.5 h-1.5 rounded-full flex-shrink-0",
+    style: {
+      background: priCol
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-medium text-stone-800"
+  }, task.title)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 mt-1 text-[11px] text-stone-500 flex-wrap"
+  }, client && /*#__PURE__*/React.createElement("span", {
+    className: "text-stone-600"
+  }, client.name), task.dueDate && /*#__PURE__*/React.createElement("span", {
+    className: showOverdue ? 'text-red-800 font-medium' : ''
+  }, formatDate(task.dueDate)), /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-1"
+  }, statusIcon, task.status))));
+}
+
+// ============================================================
+// Briefing
+// ============================================================
+function Briefing(_ref9) {
+  let {
+    overdue,
+    dueToday,
+    dueThisWeek,
+    highPriority,
+    clients,
+    onTaskClick,
+    onToggle,
+    onAddTask,
+    onAddClient,
+    hasClients
+  } = _ref9;
+  const find = id => clients.find(c => c.id === id);
+  const total = overdue.length + dueToday.length;
+  const empty = overdue.length === 0 && dueToday.length === 0 && dueThisWeek.length === 0 && highPriority.length === 0;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rounded-2xl p-5 border border-stone-300/70 bg-white/60"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] tracking-[0.3em] text-stone-500 mb-3"
+  }, "\u672C\u65E5\u306E\u30D6\u30EA\u30FC\u30D5\u30A3\u30F3\u30B0"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-5"
+  }, /*#__PURE__*/React.createElement(Stat, {
+    label: "\u671F\u65E5\u8D85\u904E",
+    value: overdue.length,
+    accent: "#8b1a1a"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    label: "\u672C\u65E5\u7DE0\u5207",
+    value: dueToday.length,
+    accent: "#1f3a5f"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    label: "\u4ECA\u9031\u4E2D",
+    value: dueThisWeek.length,
+    accent: "#6b5d3f"
+  })), total === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-sm text-stone-600 font-mincho"
+  }, "\u672C\u65E5\u306E\u6025\u52D9\u306F\u3042\u308A\u307E\u305B\u3093\u3002\u843D\u3061\u7740\u3044\u3066\u53D6\u308A\u304B\u304B\u308C\u308B\u65E5\u3067\u3059\u3002")), overdue.length > 0 && /*#__PURE__*/React.createElement(Section, {
+    title: "\u671F\u65E5\u8D85\u904E",
+    accent: "#8b1a1a"
+  }, overdue.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: find(t.clientId),
+    onClick: () => onTaskClick(t),
+    onToggle: () => onToggle(t.id),
+    showOverdue: true
+  }))), dueToday.length > 0 && /*#__PURE__*/React.createElement(Section, {
+    title: "\u672C\u65E5\u7DE0\u5207",
+    accent: "#1f3a5f"
+  }, dueToday.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: find(t.clientId),
+    onClick: () => onTaskClick(t),
+    onToggle: () => onToggle(t.id)
+  }))), dueThisWeek.length > 0 && /*#__PURE__*/React.createElement(Section, {
+    title: "\u4ECA\u9031\u4E2D\u306E\u7DE0\u5207",
+    accent: "#6b5d3f"
+  }, dueThisWeek.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: find(t.clientId),
+    onClick: () => onTaskClick(t),
+    onToggle: () => onToggle(t.id)
+  }))), highPriority.length > 0 && /*#__PURE__*/React.createElement(Section, {
+    title: "\u512A\u5148\u5EA6\u30FB\u9AD8(\u671F\u65E5\u672A\u5B9A\u542B\u3080)",
+    accent: "#a0522d"
+  }, highPriority.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: find(t.clientId),
+    onClick: () => onTaskClick(t),
+    onToggle: () => onToggle(t.id)
+  }))), empty && /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-12 text-stone-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm mb-4"
+  }, hasClients ? 'まだタスクがありません' : 'まずは案件を登録してください'), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 justify-center"
+  }, hasClients ? /*#__PURE__*/React.createElement("button", {
+    onClick: onAddTask,
+    className: "px-5 py-2 rounded-full text-sm text-white",
+    style: {
+      background: '#1f3a5f'
+    }
+  }, "\u30BF\u30B9\u30AF\u3092\u8FFD\u52A0") : /*#__PURE__*/React.createElement("button", {
+    onClick: onAddClient,
+    className: "px-5 py-2 rounded-full text-sm text-white",
+    style: {
+      background: '#1f3a5f'
+    }
+  }, "\u6700\u521D\u306E\u6848\u4EF6\u3092\u8FFD\u52A0"))));
+}
+
+// ============================================================
+// ClientsList
+// ============================================================
+function ClientsList(_ref0) {
+  let {
+    clients,
+    tasks,
+    filter,
+    setFilter,
+    onSelect,
+    onAdd
+  } = _ref0;
+  const filters = ['all', '継続', '単発', ...CATEGORIES];
+  const label = {
+    all: 'すべて'
+  };
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs tracking-[0.3em] text-stone-600"
+  }, "\u6848\u4EF6\u4E00\u89A7 (", clients.length, ")"), /*#__PURE__*/React.createElement("button", {
+    onClick: onAdd,
+    className: "text-xs px-3 py-1.5 rounded-full border border-stone-400 bg-white/50"
+  }, "+ \u65B0\u898F")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 overflow-x-auto pb-2 mb-4 -mx-5 px-5"
+  }, filters.map(f => /*#__PURE__*/React.createElement("button", {
+    key: f,
+    onClick: () => setFilter(f),
+    className: `flex-shrink-0 text-xs px-3 py-1.5 rounded-full border ${filter === f ? 'bg-stone-800 text-stone-50 border-stone-800' : 'border-stone-300 text-stone-600 bg-white/50'}`
+  }, label[f] || f))), clients.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-12 text-stone-500 text-sm"
+  }, "\u8A72\u5F53\u306A\u3057") : /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, clients.map(c => {
+    const active = tasks.filter(t => t.clientId === c.id && t.status !== '完了').length;
+    const od = tasks.filter(t => t.clientId === c.id && t.status !== '完了' && t.dueDate && t.dueDate < todayStr()).length;
+    return /*#__PURE__*/React.createElement("button", {
+      key: c.id,
+      onClick: () => onSelect(c.id),
+      className: "w-full text-left p-4 rounded-xl border border-stone-300/70 bg-white/70"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center justify-between"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 min-w-0"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center gap-2"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: `text-[10px] px-1.5 py-0.5 rounded ${c.type === '継続' ? 'bg-stone-800 text-stone-50' : 'bg-amber-700 text-amber-50'}`
+    }, c.type), /*#__PURE__*/React.createElement("span", {
+      className: "text-[10px] text-stone-500"
+    }, c.category)), /*#__PURE__*/React.createElement("div", {
+      className: "font-medium mt-1 text-stone-800"
+    }, c.name)), /*#__PURE__*/React.createElement("div", {
+      className: "text-right flex-shrink-0 ml-3"
+    }, od > 0 && /*#__PURE__*/React.createElement("div", {
+      className: "text-[10px] text-red-800 font-medium"
+    }, "\u8D85\u904E", od), /*#__PURE__*/React.createElement("div", {
+      className: "text-[11px] text-stone-500"
+    }, "\u672A\u5B8C\u4E86 ", active))));
+  })));
+}
+
+// ============================================================
+// ClientDetail
+// ============================================================
+function ClientDetail(_ref1) {
+  let {
+    client,
+    tasks,
+    onBack,
+    onEditClient,
+    onDeleteClient,
+    onAddTask,
+    onEditTask,
+    onToggle
+  } = _ref1;
+  const [showCompleted, setShowCompleted] = useState(false);
+  const active = tasks.filter(t => t.status !== '完了').sort((a, b) => {
+    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return 0;
+  });
+  const completed = tasks.filter(t => t.status === '完了');
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    className: "flex items-center gap-1 text-sm text-stone-600 mb-4 -ml-1"
+  }, /*#__PURE__*/React.createElement(Icon.Chevron, {
+    className: "w-4 h-4"
+  }), "\u4E00\u89A7\u3078"), /*#__PURE__*/React.createElement("div", {
+    className: "rounded-2xl p-5 border border-stone-300/70 bg-white/70 mb-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 mb-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: `text-[10px] px-1.5 py-0.5 rounded ${client.type === '継続' ? 'bg-stone-800 text-stone-50' : 'bg-amber-700 text-amber-50'}`
+  }, client.type), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] text-stone-500"
+  }, client.category)), /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-mincho",
+    style: {
+      fontWeight: 600
+    }
+  }, client.name), client.memo && /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-stone-600 mt-2 whitespace-pre-wrap"
+  }, client.memo)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 flex-shrink-0"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onEditClient,
+    className: "w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center bg-white"
+  }, /*#__PURE__*/React.createElement(Icon.Edit, {
+    className: "w-3.5 h-3.5 text-stone-600"
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: onDeleteClient,
+    className: "w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center bg-white"
+  }, /*#__PURE__*/React.createElement(Icon.Trash, {
+    className: "w-3.5 h-3.5 text-stone-600"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs tracking-[0.3em] text-stone-600"
+  }, "\u30BF\u30B9\u30AF (", active.length, ")"), /*#__PURE__*/React.createElement("button", {
+    onClick: onAddTask,
+    className: "text-xs px-3 py-1.5 rounded-full border border-stone-400 bg-white/50"
+  }, "+ \u8FFD\u52A0")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, active.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-sm text-stone-500 py-6"
+  }, "\u672A\u5B8C\u4E86\u30BF\u30B9\u30AF\u306A\u3057"), active.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: null,
+    onClick: () => onEditTask(t),
+    onToggle: () => onToggle(t.id),
+    showOverdue: t.dueDate && t.dueDate < todayStr()
+  }))), completed.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowCompleted(!showCompleted),
+    className: "text-xs text-stone-500 tracking-widest"
+  }, "\u5B8C\u4E86\u6E08 (", completed.length, ") ", showCompleted ? '▲' : '▼'), showCompleted && /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 mt-3 opacity-60"
+  }, completed.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: null,
+    onClick: () => onEditTask(t),
+    onToggle: () => onToggle(t.id)
+  })))));
+}
+
+// ============================================================
+// モーダル
+// ============================================================
+function ModalShell(_ref10) {
+  let {
+    title,
+    children,
+    onClose
+  } = _ref10;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full sm:max-w-md bg-stone-50 rounded-t-3xl sm:rounded-3xl p-5 max-h-[92vh] overflow-y-auto",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-mincho",
+    style: {
+      fontWeight: 600
+    }
+  }, title), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    className: "w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-200"
+  }, /*#__PURE__*/React.createElement(Icon.X, {
+    className: "w-4 h-4"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, children)));
+}
+function Field(_ref11) {
+  let {
+    label,
+    children
+  } = _ref11;
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] tracking-[0.2em] text-stone-500 mb-1.5"
+  }, label), children);
+}
+function ClientModal(_ref12) {
+  let {
+    client,
+    mode,
+    onSave,
+    onClose
+  } = _ref12;
+  const [form, setForm] = useState({
+    id: client.id || null,
+    name: client.name || '',
+    type: client.type || '継続',
+    category: client.category || '医療機関',
+    memo: client.memo || ''
+  });
+  return /*#__PURE__*/React.createElement(ModalShell, {
+    title: mode === 'edit' ? '案件の編集' : '新しい案件',
+    onClose: onClose
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "\u6848\u4EF6\u540D"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    value: form.name,
+    onChange: e => setForm({
+      ...form,
+      name: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-stone-300 bg-white",
+    placeholder: "\u4F8B:\u30B9\u30B1\u30CA\u30AC\u533B\u9662\u3001\u25CB\u25CB\u5B66\u4F1A\u8B1B\u6F14"
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "\u7A2E\u5225"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, TYPES.map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    type: "button",
+    onClick: () => setForm({
+      ...form,
+      type: t
+    }),
+    className: `flex-1 py-2 rounded-lg text-sm border ${form.type === t ? 'bg-stone-800 text-stone-50 border-stone-800' : 'bg-white border-stone-300'}`
+  }, t)))), /*#__PURE__*/React.createElement(Field, {
+    label: "\u30AB\u30C6\u30B4\u30EA"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2"
+  }, CATEGORIES.map(c => /*#__PURE__*/React.createElement("button", {
+    key: c,
+    type: "button",
+    onClick: () => setForm({
+      ...form,
+      category: c
+    }),
+    className: `text-xs px-3 py-1.5 rounded-full border ${form.category === c ? 'bg-stone-800 text-stone-50 border-stone-800' : 'bg-white border-stone-300'}`
+  }, c)))), /*#__PURE__*/React.createElement(Field, {
+    label: "\u30E1\u30E2(\u4EFB\u610F)"
+  }, /*#__PURE__*/React.createElement("textarea", {
+    value: form.memo,
+    onChange: e => setForm({
+      ...form,
+      memo: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-stone-300 bg-white resize-none h-20",
+    placeholder: "\u62C5\u5F53\u8005\u3001\u5951\u7D04\u5185\u5BB9\u3001\u9023\u7D61\u5148\u306A\u3069"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mt-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    className: "flex-1 py-2.5 rounded-lg border border-stone-300 bg-white text-stone-700"
+  }, "\u30AD\u30E3\u30F3\u30BB\u30EB"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => form.name.trim() && onSave(form),
+    disabled: !form.name.trim(),
+    className: "flex-1 py-2.5 rounded-lg text-white disabled:opacity-40",
+    style: {
+      background: '#1f3a5f'
+    }
+  }, "\u4FDD\u5B58")));
+}
+function TaskModal(_ref13) {
+  var _clients$0$id, _clients$;
+  let {
+    task,
+    mode,
+    clients,
+    onSave,
+    onDelete,
+    onClose
+  } = _ref13;
+  const [form, setForm] = useState({
+    id: task.id || null,
+    clientId: task.clientId || ((_clients$0$id = (_clients$ = clients[0]) === null || _clients$ === void 0 ? void 0 : _clients$.id) !== null && _clients$0$id !== void 0 ? _clients$0$id : ''),
+    title: task.title || '',
+    dueDate: normalizeDate(task.dueDate) || '',
+    priority: task.priority || '中',
+    status: task.status || '未着手',
+    memo: task.memo || ''
+  });
+  return /*#__PURE__*/React.createElement(ModalShell, {
+    title: mode === 'edit' ? 'タスクの編集' : '新しいタスク',
+    onClose: onClose
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "\u6240\u5C5E\u6848\u4EF6"
+  }, /*#__PURE__*/React.createElement("select", {
+    value: form.clientId,
+    onChange: e => setForm({
+      ...form,
+      clientId: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-stone-300 bg-white"
+  }, clients.length === 0 && /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "(\u6848\u4EF6\u304C\u672A\u767B\u9332\u3067\u3059)"), clients.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c.id,
+    value: c.id
+  }, c.name, " [", c.type, "]")))), /*#__PURE__*/React.createElement(Field, {
+    label: "\u30BF\u30B9\u30AF\u5185\u5BB9"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    value: form.title,
+    onChange: e => setForm({
+      ...form,
+      title: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-stone-300 bg-white",
+    placeholder: "\u4F8B:\u898B\u7A4D\u66F8\u9001\u4ED8\u3001\u4F01\u753B\u66F8\u521D\u7A3F\u4F5C\u6210"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-3"
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "\u671F\u65E5"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: form.dueDate,
+    onChange: e => setForm({
+      ...form,
+      dueDate: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-stone-300 bg-white"
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "\u512A\u5148\u5EA6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1"
+  }, PRIORITIES.map(p => /*#__PURE__*/React.createElement("button", {
+    key: p,
+    type: "button",
+    onClick: () => setForm({
+      ...form,
+      priority: p
+    }),
+    className: `flex-1 py-2 rounded-lg text-sm border ${form.priority === p ? 'bg-stone-800 text-stone-50 border-stone-800' : 'bg-white border-stone-300'}`
+  }, p))))), /*#__PURE__*/React.createElement(Field, {
+    label: "\u30B9\u30C6\u30FC\u30BF\u30B9"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-1.5"
+  }, STATUSES.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    type: "button",
+    onClick: () => setForm({
+      ...form,
+      status: s
+    }),
+    className: `text-xs px-3 py-1.5 rounded-full border ${form.status === s ? 'bg-stone-800 text-stone-50 border-stone-800' : 'bg-white border-stone-300'}`
+  }, s)))), /*#__PURE__*/React.createElement(Field, {
+    label: "\u30E1\u30E2(\u4EFB\u610F)"
+  }, /*#__PURE__*/React.createElement("textarea", {
+    value: form.memo,
+    onChange: e => setForm({
+      ...form,
+      memo: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-stone-300 bg-white resize-none h-20"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mt-6"
+  }, mode === 'edit' && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      if (confirm('このタスクを削除しますか?')) onDelete(form.id);
+    },
+    className: "py-2.5 px-4 rounded-lg border border-red-300 text-red-800 bg-white"
+  }, /*#__PURE__*/React.createElement(Icon.Trash, {
+    className: "w-4 h-4"
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    className: "flex-1 py-2.5 rounded-lg border border-stone-300 bg-white text-stone-700"
+  }, "\u30AD\u30E3\u30F3\u30BB\u30EB"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => form.title.trim() && form.clientId && onSave(form),
+    disabled: !form.title.trim() || !form.clientId,
+    className: "flex-1 py-2.5 rounded-lg text-white disabled:opacity-40",
+    style: {
+      background: '#1f3a5f'
+    }
+  }, "\u4FDD\u5B58")));
+}
+
+// ============================================================
+// マウント
+// ============================================================
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+
+</body>
+</html>
