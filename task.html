@@ -250,6 +250,37 @@ const Icon = {
     r: "3"
   }), /*#__PURE__*/React.createElement("path", {
     d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+  })),
+  List: p => /*#__PURE__*/React.createElement(Svg, p, /*#__PURE__*/React.createElement("line", {
+    x1: "8",
+    y1: "6",
+    x2: "21",
+    y2: "6"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "8",
+    y1: "12",
+    x2: "21",
+    y2: "12"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "8",
+    y1: "18",
+    x2: "21",
+    y2: "18"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "3",
+    y1: "6",
+    x2: "3.01",
+    y2: "6"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "3",
+    y1: "12",
+    x2: "3.01",
+    y2: "12"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "3",
+    y1: "18",
+    x2: "3.01",
+    y2: "18"
   }))
 };
 
@@ -655,6 +686,20 @@ function Main(_ref3) {
       payload: {}
     }),
     hasClients: data.clients.length > 0
+  }), view === 'tasks' && /*#__PURE__*/React.createElement(AllTasks, {
+    tasks: data.tasks,
+    clients: data.clients,
+    onTaskClick: t => setModal({
+      type: 'task',
+      mode: 'edit',
+      payload: t
+    }),
+    onToggle: toggleComplete,
+    onAddTask: () => setModal({
+      type: 'task',
+      mode: 'add',
+      payload: {}
+    })
   }), view === 'clients' && !selectedClient && /*#__PURE__*/React.createElement(ClientsList, {
     clients: visibleClients,
     tasks: data.tasks,
@@ -697,6 +742,14 @@ function Main(_ref3) {
     label: "\u672C\u65E5",
     onClick: () => {
       setView('briefing');
+      setSelectedClientId(null);
+    }
+  }), /*#__PURE__*/React.createElement(NavBtn, {
+    active: view === 'tasks',
+    icon: /*#__PURE__*/React.createElement(Icon.List, null),
+    label: "\u30BF\u30B9\u30AF",
+    onClick: () => {
+      setView('tasks');
       setSelectedClientId(null);
     }
   }), /*#__PURE__*/React.createElement("button", {
@@ -829,6 +882,34 @@ function Section(_ref7) {
     className: "space-y-2"
   }, children));
 }
+
+// ---- 優先度カラー(信号色) ----
+const PRIORITY_COLORS = {
+  '高': {
+    dot: '#dc2626',
+    bg: '#dc2626',
+    text: '#ffffff',
+    soft: '#fee2e2',
+    softText: '#991b1b'
+  },
+  // 赤
+  '中': {
+    dot: '#d97706',
+    bg: '#d97706',
+    text: '#ffffff',
+    soft: '#fef3c7',
+    softText: '#92400e'
+  },
+  // 琥珀/黄
+  '低': {
+    dot: '#16a34a',
+    bg: '#16a34a',
+    text: '#ffffff',
+    soft: '#dcfce7',
+    softText: '#166534'
+  } // 緑
+};
+const getPriColor = p => PRIORITY_COLORS[p] || PRIORITY_COLORS['中'];
 function TaskRow(_ref8) {
   let {
     task,
@@ -837,11 +918,7 @@ function TaskRow(_ref8) {
     onToggle,
     showOverdue
   } = _ref8;
-  const priCol = {
-    '高': '#8b1a1a',
-    '中': '#a0522d',
-    '低': '#6b7280'
-  }[task.priority] || '#6b7280';
+  const priCol = getPriColor(task.priority).dot;
   const statusIcon = {
     '未着手': /*#__PURE__*/React.createElement(Icon.Circle, {
       className: "w-3 h-3"
@@ -989,9 +1066,172 @@ function Briefing(_ref9) {
 }
 
 // ============================================================
+// AllTasks(全タスク横断ビュー)
+// ============================================================
+function AllTasks(_ref0) {
+  let {
+    tasks,
+    clients,
+    onTaskClick,
+    onToggle,
+    onAddTask
+  } = _ref0;
+  const [sortBy, setSortBy] = useState('dueDate'); // dueDate | priority | status
+  const [priFilter, setPriFilter] = useState('all'); // all | 高 | 中 | 低
+  const [statusFilter, setStatusFilter] = useState('active'); // active | all | 完了 | 各ステータス
+  const [clientFilter, setClientFilter] = useState('all');
+  const findClient = id => clients.find(c => c.id === id);
+  const today = todayStr();
+
+  // フィルタ
+  let filtered = tasks.slice();
+  if (statusFilter === 'active') {
+    filtered = filtered.filter(t => t.status !== '完了');
+  } else if (statusFilter !== 'all') {
+    filtered = filtered.filter(t => t.status === statusFilter);
+  }
+  if (priFilter !== 'all') filtered = filtered.filter(t => t.priority === priFilter);
+  if (clientFilter !== 'all') filtered = filtered.filter(t => t.clientId === clientFilter);
+
+  // ソート
+  const priOrder = {
+    '高': 0,
+    '中': 1,
+    '低': 2
+  };
+  const statusOrder = {
+    '進行中': 0,
+    'レビュー待ち': 1,
+    '未着手': 2,
+    '保留': 3,
+    '完了': 4
+  };
+  if (sortBy === 'dueDate') {
+    filtered.sort((a, b) => {
+      const ad = a.dueDate || '';
+      const bd = b.dueDate || '';
+      if (ad && bd) return ad.localeCompare(bd);
+      if (ad) return -1; // 期日ありが先
+      if (bd) return 1;
+      return 0;
+    });
+  } else if (sortBy === 'priority') {
+    filtered.sort((a, b) => {
+      var _priOrder$a$priority, _priOrder$b$priority;
+      return ((_priOrder$a$priority = priOrder[a.priority]) !== null && _priOrder$a$priority !== void 0 ? _priOrder$a$priority : 9) - ((_priOrder$b$priority = priOrder[b.priority]) !== null && _priOrder$b$priority !== void 0 ? _priOrder$b$priority : 9);
+    });
+  } else if (sortBy === 'status') {
+    filtered.sort((a, b) => {
+      var _statusOrder$a$status, _statusOrder$b$status;
+      return ((_statusOrder$a$status = statusOrder[a.status]) !== null && _statusOrder$a$status !== void 0 ? _statusOrder$a$status : 9) - ((_statusOrder$b$status = statusOrder[b.status]) !== null && _statusOrder$b$status !== void 0 ? _statusOrder$b$status : 9);
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs tracking-[0.3em] text-stone-600"
+  }, "\u5168\u30BF\u30B9\u30AF (", filtered.length, ")"), /*#__PURE__*/React.createElement("button", {
+    onClick: onAddTask,
+    className: "text-xs px-3 py-1.5 rounded-full border border-stone-400 bg-white/50"
+  }, "+ \u8FFD\u52A0")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 text-[11px]"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-stone-500 self-center mr-1"
+  }, "\u4E26\u3073:"), [{
+    k: 'dueDate',
+    label: '期日順'
+  }, {
+    k: 'priority',
+    label: '優先度順'
+  }, {
+    k: 'status',
+    label: 'ステータス順'
+  }].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.k,
+    onClick: () => setSortBy(s.k),
+    className: `px-3 py-1 rounded-full border ${sortBy === s.k ? 'bg-stone-800 text-stone-50 border-stone-800' : 'border-stone-300 text-stone-600 bg-white/50'}`
+  }, s.label))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1.5 overflow-x-auto pb-1 -mx-5 px-5"
+  }, [{
+    k: 'active',
+    label: '未完了のみ'
+  }, {
+    k: 'all',
+    label: '全て'
+  }, {
+    k: '進行中',
+    label: '進行中'
+  }, {
+    k: '未着手',
+    label: '未着手'
+  }, {
+    k: 'レビュー待ち',
+    label: 'レビュー待ち'
+  }, {
+    k: '保留',
+    label: '保留'
+  }, {
+    k: '完了',
+    label: '完了'
+  }].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.k,
+    onClick: () => setStatusFilter(s.k),
+    className: `flex-shrink-0 text-[11px] px-3 py-1 rounded-full border ${statusFilter === s.k ? 'bg-stone-700 text-stone-50 border-stone-700' : 'border-stone-300 text-stone-600 bg-white/50'}`
+  }, s.label))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1.5 items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[11px] text-stone-500"
+  }, "\u512A\u5148\u5EA6:"), ['all', '高', '中', '低'].map(p => {
+    const isAll = p === 'all';
+    const col = isAll ? null : getPriColor(p);
+    const active = priFilter === p;
+    return /*#__PURE__*/React.createElement("button", {
+      key: p,
+      onClick: () => setPriFilter(p),
+      className: "text-[11px] px-3 py-1 rounded-full border transition",
+      style: active && !isAll ? {
+        background: col.bg,
+        color: col.text,
+        borderColor: col.bg
+      } : active && isAll ? {
+        background: '#44403c',
+        color: 'white',
+        borderColor: '#44403c'
+      } : {
+        background: 'white',
+        borderColor: '#d6d3d1',
+        color: '#57534e'
+      }
+    }, isAll ? '全て' : p);
+  })), clients.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1.5 overflow-x-auto pb-1 -mx-5 px-5"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setClientFilter('all'),
+    className: `flex-shrink-0 text-[11px] px-3 py-1 rounded-full border ${clientFilter === 'all' ? 'bg-stone-700 text-stone-50 border-stone-700' : 'border-stone-300 text-stone-600 bg-white/50'}`
+  }, "\u5168\u6848\u4EF6"), clients.map(c => /*#__PURE__*/React.createElement("button", {
+    key: c.id,
+    onClick: () => setClientFilter(c.id),
+    className: `flex-shrink-0 text-[11px] px-3 py-1 rounded-full border ${clientFilter === c.id ? 'bg-stone-700 text-stone-50 border-stone-700' : 'border-stone-300 text-stone-600 bg-white/50'}`
+  }, c.name))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 pt-1"
+  }, filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-10 text-stone-500 text-sm"
+  }, "\u8A72\u5F53\u30BF\u30B9\u30AF\u306A\u3057") : filtered.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    task: t,
+    client: findClient(t.clientId),
+    onClick: () => onTaskClick(t),
+    onToggle: () => onToggle(t.id),
+    showOverdue: t.dueDate && t.dueDate < today && t.status !== '完了'
+  }))));
+}
+
+// ============================================================
 // ClientsList
 // ============================================================
-function ClientsList(_ref0) {
+function ClientsList(_ref1) {
   let {
     clients,
     tasks,
@@ -999,7 +1239,7 @@ function ClientsList(_ref0) {
     setFilter,
     onSelect,
     onAdd
-  } = _ref0;
+  } = _ref1;
   const filters = ['all', '継続', '単発', ...CATEGORIES];
   const label = {
     all: 'すべて'
@@ -1053,7 +1293,7 @@ function ClientsList(_ref0) {
 // ============================================================
 // ClientDetail
 // ============================================================
-function ClientDetail(_ref1) {
+function ClientDetail(_ref10) {
   let {
     client,
     tasks,
@@ -1063,7 +1303,7 @@ function ClientDetail(_ref1) {
     onAddTask,
     onEditTask,
     onToggle
-  } = _ref1;
+  } = _ref10;
   const [showCompleted, setShowCompleted] = useState(false);
   const active = tasks.filter(t => t.status !== '完了').sort((a, b) => {
     if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
@@ -1145,12 +1385,12 @@ function ClientDetail(_ref1) {
 // ============================================================
 // モーダル
 // ============================================================
-function ModalShell(_ref10) {
+function ModalShell(_ref11) {
   let {
     title,
     children,
     onClose
-  } = _ref10;
+  } = _ref11;
   return /*#__PURE__*/React.createElement("div", {
     className: "fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40",
     onClick: onClose
@@ -1173,22 +1413,22 @@ function ModalShell(_ref10) {
     className: "space-y-4"
   }, children)));
 }
-function Field(_ref11) {
+function Field(_ref12) {
   let {
     label,
     children
-  } = _ref11;
+  } = _ref12;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "text-[10px] tracking-[0.2em] text-stone-500 mb-1.5"
   }, label), children);
 }
-function ClientModal(_ref12) {
+function ClientModal(_ref13) {
   let {
     client,
     mode,
     onSave,
     onClose
-  } = _ref12;
+  } = _ref13;
   const [form, setForm] = useState({
     id: client.id || null,
     name: client.name || '',
@@ -1258,7 +1498,7 @@ function ClientModal(_ref12) {
     }
   }, "\u4FDD\u5B58")));
 }
-function TaskModal(_ref13) {
+function TaskModal(_ref14) {
   var _clients$0$id, _clients$;
   let {
     task,
@@ -1267,7 +1507,7 @@ function TaskModal(_ref13) {
     onSave,
     onDelete,
     onClose
-  } = _ref13;
+  } = _ref14;
   const [form, setForm] = useState({
     id: task.id || null,
     clientId: task.clientId || ((_clients$0$id = (_clients$ = clients[0]) === null || _clients$ === void 0 ? void 0 : _clients$.id) !== null && _clients$0$id !== void 0 ? _clients$0$id : ''),
@@ -1320,16 +1560,29 @@ function TaskModal(_ref13) {
   })), /*#__PURE__*/React.createElement(Field, {
     label: "\u512A\u5148\u5EA6"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-1"
-  }, PRIORITIES.map(p => /*#__PURE__*/React.createElement("button", {
-    key: p,
-    type: "button",
-    onClick: () => setForm({
-      ...form,
-      priority: p
-    }),
-    className: `flex-1 py-2 rounded-lg text-sm border ${form.priority === p ? 'bg-stone-800 text-stone-50 border-stone-800' : 'bg-white border-stone-300'}`
-  }, p))))), /*#__PURE__*/React.createElement(Field, {
+    className: "flex gap-1.5"
+  }, PRIORITIES.map(p => {
+    const col = getPriColor(p);
+    const selected = form.priority === p;
+    return /*#__PURE__*/React.createElement("button", {
+      key: p,
+      type: "button",
+      onClick: () => setForm({
+        ...form,
+        priority: p
+      }),
+      className: "flex-1 py-2 rounded-lg text-sm border font-medium transition",
+      style: selected ? {
+        background: col.bg,
+        color: col.text,
+        borderColor: col.bg
+      } : {
+        background: 'white',
+        color: col.softText,
+        borderColor: '#d6d3d1'
+      }
+    }, p);
+  })))), /*#__PURE__*/React.createElement(Field, {
     label: "\u30B9\u30C6\u30FC\u30BF\u30B9"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex flex-wrap gap-1.5"
