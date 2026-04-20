@@ -62,21 +62,35 @@ const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
-const formatDate = s => {
-  if (!s) return '';
-  const str = String(s).slice(0, 10);
-  const parts = str.split('-');
-  if (parts.length < 3) return str;
-  return `${Number(parts[1])}月${Number(parts[2])}日`;
-};
+
+// 日付文字列を常に YYYY-MM-DD (JST基準) に正規化
+// 入力例:
+//   "2026-04-19"                      → "2026-04-19" (そのまま)
+//   "2026-04-19T15:00:00.000Z"        → "2026-04-20" (UTC→JST変換)
+//   "2026-04-18T15:00:00.000Z"        → "2026-04-19" (UTC→JST変換)
+//   "Sun Apr 19 2026 00:00:00 GMT+0900" → "2026-04-19"
 const normalizeDate = s => {
   if (!s) return '';
-  const str = String(s);
-  // ISO形式や日付オブジェクトの文字列化にも対応
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+  const str = String(s).trim();
+  // パターンA: 純粋な YYYY-MM-DD(完全一致、10文字ちょうど)→ そのまま使う(最も安全)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // パターンB: YYYY-MM-DDT... で始まるISO文字列 → タイムゾーン情報を含めて正しく解釈
+  // new Date() は "Z" 終端を UTC として、JSTに変換して解釈する
   const d = new Date(str);
-  if (isNaN(d.getTime())) return '';
+  if (isNaN(d.getTime())) {
+    // Dateでparseできなかった場合、先頭10文字が日付形式っぽければそれを返す
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+    return '';
+  }
+  // ローカルタイムゾーン(JST)基準の年月日を返す
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const formatDate = s => {
+  const normalized = normalizeDate(s);
+  if (!normalized) return '';
+  const parts = normalized.split('-');
+  if (parts.length < 3) return normalized;
+  return `${Number(parts[1])}月${Number(parts[2])}日`;
 };
 const daysUntil = dateStr => {
   if (!dateStr) return null;
