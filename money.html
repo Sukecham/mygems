@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>支払確認帳 · myGEMS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f5f1e8 0%, #ede6d3 100%);
+    font-family: "Shippori Mincho", "Noto Serif JP", serif;
+    color: #2b2620;
+  }
+  .row { transition: background 0.15s ease; }
+  .row:hover { background: rgba(139, 58, 46, 0.03); }
+  .row td { border-bottom: 1px solid rgba(70, 50, 30, 0.06); }
+  .cell-btn { transition: transform 0.12s ease, background 0.15s ease; }
+  .cell-btn:hover { transform: scale(1.04); z-index: 2; }
+  .item-edit-btn, .item-delete-btn { opacity: 0; transition: opacity 0.15s ease; }
+  .row:hover .item-edit-btn, .row:hover .item-delete-btn { opacity: 1; }
+  input:focus, button:focus { outline: none; }
+  input:focus { border-color: #8b3a2e !important; }
+  .icon { display: inline-block; vertical-align: middle; }
+</style>
+
+</head>
+<body>
+
+<div id="root"></div>
+
+<!-- ============================================================
+     重要: Apps Script の Web アプリ URL を貼り付けてください
+     空欄のままだとデモモードで起動します(データは保存されません)
+     ============================================================ -->
+
+<script>
+  window.GAS_API_URL = '';
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const YEAR = 2026;
+const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+const Icon = {
+  Check: ({size=16, color='currentColor', strokeWidth=2}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  ),
+  Plus: ({size=16, color='currentColor', strokeWidth=2}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  ),
+  Edit: ({size=16, color='currentColor', strokeWidth=2}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+  ),
+  Trash: ({size=16, color='currentColor', strokeWidth=2}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+  ),
+  Save: ({size=16, color='currentColor', strokeWidth=2}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+  ),
+  Cloud: ({size=14}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+  ),
+  CloudOff: ({size=14}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+  ),
+  Alert: ({size=14}) => (
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  ),
+};
+
+const api = {
+  async getAll() {
+    if (!window.GAS_API_URL) return null;
+    const res = await fetch(`${window.GAS_API_URL}?action=getAll&_t=${Date.now()}`);
+    return await res.json();
+  },
+  async post(action, payload) {
+    if (!window.GAS_API_URL) return null;
+    const res = await fetch(window.GAS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, ...payload })
+    });
+    return await res.json();
+  }
+};
+
+const DEMO_ITEMS = [
+  { id: 'i1', name: '自動車税', payable_months: [5], sort_order: 1 },
+  { id: 'i2', name: '住民税', payable_months: [1,6,8,10], sort_order: 2 },
+  { id: 'i3', name: '国民健康保険料', payable_months: [1,2,3,6,7,8,9,10,11,12], sort_order: 3 },
+  { id: 'i4', name: '国民年金保険料', payable_months: MONTHS, sort_order: 4 },
+  { id: 'i5', name: '家賃', payable_months: MONTHS, sort_order: 5 },
+  { id: 'i6', name: '顧問弁護士料', payable_months: MONTHS, sort_order: 6 },
+  { id: 'i7', name: '会計ソフト年額', payable_months: [4], sort_order: 7 },
+  { id: 'i8', name: '専従者給与(妻)', payable_months: MONTHS, sort_order: 8 },
+];
+
+const DEMO_PAYMENTS = [
+  { item_id: 'i4', year: 2026, month: 1, amount: 17510, checked_date: '2026-01-15' },
+  { item_id: 'i4', year: 2026, month: 2, amount: 17510, checked_date: '2026-02-15' },
+  { item_id: 'i5', year: 2026, month: 1, amount: 65000, checked_date: '2026-01-05' },
+  { item_id: 'i5', year: 2026, month: 2, amount: 65000, checked_date: '2026-02-05' },
+  { item_id: 'i5', year: 2026, month: 3, amount: 65000, checked_date: '2026-03-05' },
+  { item_id: 'i8', year: 2026, month: 1, amount: 88000, checked_date: '2026-01-25' },
+  { item_id: 'i8', year: 2026, month: 2, amount: 88000, checked_date: '2026-02-25' },
+  { item_id: 'i8', year: 2026, month: 3, amount: 88000, checked_date: '2026-03-25' },
+];
+
+function PaymentTracker() {
+  const [items, setItems] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingCell, setEditingCell] = useState(null);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [apiStatus, setApiStatus] = useState('loading');
+
+  useEffect(() => {
+    (async () => {
+      if (window.GAS_API_URL) {
+        try {
+          const data = await api.getAll();
+          setItems(data.items || []);
+          setPayments(data.payments || []);
+          setApiStatus('online');
+        } catch (e) {
+          console.error(e);
+          setItems(DEMO_ITEMS);
+          setPayments(DEMO_PAYMENTS);
+          setApiStatus('error');
+        }
+      } else {
+        setItems(DEMO_ITEMS);
+        setPayments(DEMO_PAYMENTS);
+        setApiStatus('demo');
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const findPayment = (item_id, month) =>
+    payments.find(p => p.item_id === item_id && p.year === YEAR && p.month === month);
+
+  const savePayment = async (item_id, month, amount) => {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const newPayments = payments.filter(p => !(p.item_id === item_id && p.year === YEAR && p.month === month));
+    newPayments.push({ item_id, year: YEAR, month, amount: Number(amount), checked_date: dateStr });
+    setPayments(newPayments);
+    if (window.GAS_API_URL) {
+      try { await api.post('setPayment', { item_id, year: YEAR, month, amount: Number(amount) }); }
+      catch(e) { console.error(e); }
+    }
+  };
+
+  const deletePayment = async (item_id, month) => {
+    setPayments(payments.filter(p => !(p.item_id === item_id && p.year === YEAR && p.month === month)));
+    if (window.GAS_API_URL) {
+      try { await api.post('deletePayment', { item_id, year: YEAR, month }); }
+      catch(e) { console.error(e); }
+    }
+  };
+
+  const addItem = async (name, payable_months) => {
+    const tempId = 'i_' + Date.now();
+    const sort_order = items.length + 1;
+    const newItem = { id: tempId, name, payable_months, sort_order };
+    setItems([...items, newItem]);
+    if (window.GAS_API_URL) {
+      try {
+        const res = await api.post('addItem', { name, payable_months });
+        if (res && res.id) {
+          setItems(prev => prev.map(it => it.id === tempId ? { ...it, id: res.id } : it));
+        }
+      } catch(e) { console.error(e); }
+    }
+  };
+
+  const updateItem = async (id, name, payable_months) => {
+    setItems(items.map(it => it.id === id ? { ...it, name, payable_months } : it));
+    if (window.GAS_API_URL) {
+      try { await api.post('updateItem', { id, name, payable_months }); }
+      catch(e) { console.error(e); }
+    }
+  };
+
+  const deleteItem = async (id) => {
+    if (!window.confirm('この項目と関連する支払い記録をすべて削除します。よろしいですか?')) return;
+    setItems(items.filter(it => it.id !== id));
+    setPayments(payments.filter(p => p.item_id !== id));
+    if (window.GAS_API_URL) {
+      try { await api.post('deleteItem', { id }); }
+      catch(e) { console.error(e); }
+    }
+  };
+
+  const rowTotal = (item_id) =>
+    payments.filter(p => p.item_id === item_id && p.year === YEAR)
+            .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const grandTotal = useMemo(() =>
+    payments.filter(p => p.year === YEAR).reduce((s, p) => s + (p.amount || 0), 0)
+  , [payments]);
+
+  const monthTotal = (month) =>
+    payments.filter(p => p.year === YEAR && p.month === month)
+            .reduce((s, p) => s + (p.amount || 0), 0);
+
+  const formatYen = (n) => n === 0 ? '—' : `¥${n.toLocaleString()}`;
+  const currentMonth = new Date().getMonth() + 1;
+
+  if (loading) return <div style={S.loading}>読み込み中...</div>;
+
+  return (
+    <div style={S.container}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <header style={S.header}>
+          <div>
+            <div style={S.eyebrow}>PAYMENT · LEDGER · {YEAR}</div>
+            <h1 style={S.title}>支 払 確 認 帳</h1>
+            <div style={S.subtitle}>令和{YEAR-2018}年 · 1月 〜 12月</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <ApiBadge status={apiStatus} />
+            <button onClick={() => { setEditingItem(null); setShowItemModal(true); }} style={S.primaryBtn}>
+              <Icon.Plus size={15} strokeWidth={2.5}/> 項目を追加
+            </button>
+          </div>
+        </header>
+
+        <div style={S.summaryBar}>
+          <Summary label="項目数" value={items.length} unit="件" />
+          <Summary label="記録済みの支払い" value={payments.filter(p => p.year === YEAR).length} unit="件" />
+          <Summary label="年間支払総額" value={`¥${grandTotal.toLocaleString()}`} unit="" big />
+        </div>
+
+        <div style={S.tableWrap}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px' }}>
+            <thead>
+              <tr style={{ background: '#2b2620', color: '#f5f1e8' }}>
+                <th style={{...S.th, width: '220px', textAlign: 'left', paddingLeft: '18px'}}>項 目</th>
+                {MONTHS.map(m => (<th key={m} style={{...S.th, minWidth: '78px'}}>{m}月</th>))}
+                <th style={{...S.th, minWidth: '100px', background: '#1a1612', letterSpacing: '0.1em'}}>年 計</th>
+                <th style={{...S.th, width: '52px'}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.sort((a,b) => a.sort_order - b.sort_order).map(item => (
+                <tr key={item.id} className="row">
+                  <td style={S.itemCell}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '15px', letterSpacing: '0.02em' }}>{item.name}</span>
+                      <button className="item-edit-btn" onClick={() => { setEditingItem(item); setShowItemModal(true); }} style={S.iconBtn} title="項目を編集">
+                        <Icon.Edit size={12} />
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#8b7a5a', marginTop: '3px', fontFamily: '"JetBrains Mono", monospace' }}>
+                      対象: {item.payable_months.length === 12 ? '毎月' : item.payable_months.map(m => m+'月').join(' · ')}
+                    </div>
+                  </td>
+                  {MONTHS.map(month => {
+                    const p = findPayment(item.id, month);
+                    const isPayable = item.payable_months.includes(month);
+                    const isOverdue = isPayable && !p && month < currentMonth;
+                    return (
+                      <td key={month} style={{ padding: '6px 4px', textAlign: 'center', verticalAlign: 'middle' }}>
+                        <button onClick={() => setEditingCell({ item, month, payment: p })} className="cell-btn"
+                          style={{
+                            ...S.cellBtn,
+                            background: p ? '#e8f0e4' : isPayable ? (isOverdue ? '#fce8e3' : '#faf5e8') : '#f0ebdc',
+                            border: isOverdue ? '1px solid #d66b58' : '1px solid transparent',
+                            color: p ? '#2e6b4a' : '#8b7a5a'
+                          }}>
+                          {p ? (
+                            <>
+                              <div style={{ fontSize: '12px', fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>¥{p.amount.toLocaleString()}</div>
+                              <div style={{ fontSize: '9px', opacity: 0.7, marginTop: '2px', fontFamily: '"JetBrains Mono", monospace' }}>{p.checked_date && p.checked_date.slice(5).replace('-','/')}</div>
+                            </>
+                          ) : isPayable ? (
+                            isOverdue ? <div style={{ fontSize: '10px', color: '#b3452e', fontWeight: 600 }}>要確認</div> : <Icon.Plus size={14} strokeWidth={1.8} color="#c7b89c" />
+                          ) : (<span style={{ color: '#c7b89c' }}>—</span>)}
+                        </button>
+                      </td>
+                    );
+                  })}
+                  <td style={S.totalCell}>{formatYen(rowTotal(item.id))}</td>
+                  <td style={{ textAlign: 'center', padding: '8px' }}>
+                    <button className="item-delete-btn" onClick={() => deleteItem(item.id)} style={{...S.iconBtn, color: '#b3452e'}} title="項目を削除">
+                      <Icon.Trash size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              <tr style={{ background: '#efe8d4' }}>
+                <td style={{ padding: '14px 18px', fontSize: '11px', letterSpacing: '0.15em', color: '#6b5a45', fontWeight: 600 }}>月 計</td>
+                {MONTHS.map(m => {
+                  const total = monthTotal(m);
+                  return (
+                    <td key={m} style={{ padding: '14px 4px', textAlign: 'center', fontFamily: '"JetBrains Mono", monospace', fontSize: '11px', color: total > 0 ? '#2b2620' : '#c7b89c', fontWeight: 500 }}>
+                      {total > 0 ? `¥${total.toLocaleString()}` : '—'}
+                    </td>
+                  );
+                })}
+                <td style={{ padding: '14px 8px', textAlign: 'center', fontFamily: '"Shippori Mincho", serif', fontSize: '15px', fontWeight: 700, color: '#8b3a2e', background: '#e6dcc4' }}>
+                  ¥{grandTotal.toLocaleString()}
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: '20px', fontSize: '11px', color: '#8b7a5a', fontFamily: '"Noto Sans JP", sans-serif', lineHeight: 1.8 }}>
+          <div>· セルをクリックして金額を入力すると、その日の日付とともに記録されます</div>
+          <div>· 対象月に未記録かつ当月を過ぎたセルは<span style={{ color: '#b3452e', fontWeight: 600 }}>「要確認」</span>として赤枠で強調されます</div>
+          <div>· 項目の追加・編集・削除は右上またはホバー時のアイコンから</div>
+        </div>
+
+        <div style={S.footer}>myGEMS · PAYMENT LEDGER · Google Sheets 連携</div>
+      </div>
+
+      {editingCell && (
+        <CellModal cell={editingCell}
+          onSave={(amount) => { savePayment(editingCell.item.id, editingCell.month, amount); setEditingCell(null); }}
+          onDelete={() => { deletePayment(editingCell.item.id, editingCell.month); setEditingCell(null); }}
+          onClose={() => setEditingCell(null)}
+        />
+      )}
+
+      {showItemModal && (
+        <ItemModal item={editingItem}
+          onSave={(name, payable_months) => {
+            if (editingItem) updateItem(editingItem.id, name, payable_months);
+            else addItem(name, payable_months);
+            setShowItemModal(false);
+            setEditingItem(null);
+          }}
+          onClose={() => { setShowItemModal(false); setEditingItem(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function CellModal({ cell, onSave, onDelete, onClose }) {
+  const [amount, setAmount] = useState(cell.payment ? cell.payment.amount : '');
+  const handleSave = () => {
+    const n = Number(amount);
+    if (!n || n <= 0) return;
+    onSave(n);
+  };
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#8b3a2e', marginBottom: '6px', fontFamily: '"JetBrains Mono", monospace' }}>
+        {YEAR} · {cell.month}月
+      </div>
+      <div style={{ fontSize: '22px', fontWeight: 600, marginBottom: '24px', letterSpacing: '0.05em' }}>{cell.item.name}</div>
+      <label style={{ display: 'block', fontSize: '12px', color: '#6b5a45', marginBottom: '8px', fontFamily: '"Noto Sans JP", sans-serif' }}>支払い金額</label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+        <span style={{ fontSize: '24px', color: '#8b3a2e', fontFamily: '"Shippori Mincho", serif' }}>¥</span>
+        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }} autoFocus placeholder="0" style={S.amountInput} />
+      </div>
+      {cell.payment && (
+        <div style={{ padding: '10px 14px', background: '#f5f1e8', borderRadius: '3px', marginBottom: '20px', fontSize: '11px', color: '#6b5a45', fontFamily: '"JetBrains Mono", monospace' }}>
+          前回記録: {cell.payment.checked_date} · ¥{cell.payment.amount.toLocaleString()}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        {cell.payment && (
+          <button onClick={onDelete} style={{...S.secondaryBtn, color: '#b3452e', marginRight: 'auto'}}>
+            <Icon.Trash size={14} /> 記録を削除
+          </button>
+        )}
+        <button onClick={onClose} style={S.secondaryBtn}>キャンセル</button>
+        <button onClick={handleSave} style={S.primaryBtn}><Icon.Save size={14}/> 保存</button>
+      </div>
+    </Modal>
+  );
+}
+
+function ItemModal({ item, onSave, onClose }) {
+  const [name, setName] = useState(item ? item.name : '');
+  const [mode, setMode] = useState(!item ? 'monthly' : item.payable_months.length === 12 ? 'monthly' : 'specific');
+  const [selected, setSelected] = useState(item ? item.payable_months : MONTHS);
+
+  const toggleMonth = (m) => {
+    setSelected(selected.includes(m) ? selected.filter(x => x !== m) : [...selected, m].sort((a,b) => a-b));
+  };
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    const months = mode === 'monthly' ? MONTHS : selected;
+    if (months.length === 0) return;
+    onSave(name.trim(), months);
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#8b3a2e', marginBottom: '6px', fontFamily: '"JetBrains Mono", monospace' }}>
+        {item ? 'EDIT ITEM' : 'NEW ITEM'}
+      </div>
+      <div style={{ fontSize: '22px', fontWeight: 600, marginBottom: '24px', letterSpacing: '0.05em' }}>
+        {item ? '項目を編集' : '項目を追加'}
+      </div>
+      <label style={{ display: 'block', fontSize: '12px', color: '#6b5a45', marginBottom: '8px' }}>項目名</label>
+      <input type="text" value={name} onChange={e => setName(e.target.value)} autoFocus placeholder="例: 電気料金"
+        style={{...S.amountInput, fontSize: '16px', width: '100%', marginBottom: '24px'}} />
+      <label style={{ display: 'block', fontSize: '12px', color: '#6b5a45', marginBottom: '8px' }}>支払い対象月</label>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <ToggleBtn active={mode === 'monthly'} onClick={() => setMode('monthly')}>毎月</ToggleBtn>
+        <ToggleBtn active={mode === 'specific'} onClick={() => setMode('specific')}>月を指定</ToggleBtn>
+      </div>
+      {mode === 'specific' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '20px' }}>
+          {MONTHS.map(m => (
+            <button key={m} onClick={() => toggleMonth(m)}
+              style={{
+                padding: '10px 4px',
+                border: selected.includes(m) ? '2px solid #8b3a2e' : '1px solid #d5c9a8',
+                background: selected.includes(m) ? '#fce8e3' : '#fdfbf5',
+                color: selected.includes(m) ? '#8b3a2e' : '#6b5a45',
+                fontWeight: selected.includes(m) ? 600 : 400,
+                borderRadius: '3px', cursor: 'pointer',
+                fontFamily: '"JetBrains Mono", monospace', fontSize: '13px'
+              }}>
+              {m}月
+            </button>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '24px' }}>
+        <button onClick={onClose} style={S.secondaryBtn}>キャンセル</button>
+        <button onClick={handleSave} style={S.primaryBtn}>
+          <Icon.Save size={14}/> {item ? '更新' : '追加'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function Modal({ children, onClose }) {
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(30,24,18,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+      backdropFilter: 'blur(4px)'
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#fdfbf5', padding: '32px', borderRadius: '4px',
+        minWidth: '420px', maxWidth: '560px',
+        boxShadow: '0 20px 60px rgba(30,24,18,0.3)',
+        fontFamily: '"Shippori Mincho", "Noto Serif JP", serif',
+        color: '#2b2620'
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ToggleBtn({ active, onClick, children }) {
+  return (
+    <button onClick={onClick} style={{
+      flex: 1, padding: '10px',
+      border: active ? '2px solid #8b3a2e' : '1px solid #d5c9a8',
+      background: active ? '#fce8e3' : '#fdfbf5',
+      color: active ? '#8b3a2e' : '#6b5a45',
+      fontWeight: active ? 600 : 400,
+      borderRadius: '3px', cursor: 'pointer',
+      fontFamily: '"Shippori Mincho", serif', fontSize: '13px'
+    }}>{children}</button>
+  );
+}
+
+function Summary({ label, value, unit, big }) {
+  return (
+    <div>
+      <div style={{ fontSize: '10px', color: '#8b7a5a', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</div>
+      <div style={{ fontSize: big ? '26px' : '22px', fontWeight: 600, fontFamily: '"Shippori Mincho", serif', lineHeight: 1, color: big ? '#8b3a2e' : '#2b2620' }}>
+        {value}<span style={{ fontSize: '12px', marginLeft: '3px', fontWeight: 400 }}>{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function ApiBadge({ status }) {
+  const configs = {
+    online: { icon: <Icon.Cloud/>, label: 'Sheets接続中', color: '#2e6b4a' },
+    demo: { icon: <Icon.CloudOff/>, label: 'デモモード', color: '#8b7a5a' },
+    error: { icon: <Icon.Alert/>, label: '接続エラー', color: '#b3452e' },
+    loading: { icon: null, label: '...', color: '#8b7a5a' }
+  };
+  const c = configs[status];
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '6px',
+      padding: '6px 12px', borderRadius: '20px',
+      background: 'rgba(0,0,0,0.04)', fontSize: '11px',
+      color: c.color, fontFamily: '"JetBrains Mono", monospace'
+    }}>{c.icon}{c.label}</div>
+  );
+}
+
+const S = {
+  container: { minHeight: '100vh', padding: '28px 20px 60px' },
+  loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b5a45', fontFamily: '"Shippori Mincho", serif', fontSize: '16px' },
+  header: { marginBottom: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', borderBottom: '2px solid #8b3a2e', paddingBottom: '18px', gap: '16px', flexWrap: 'wrap' },
+  eyebrow: { fontSize: '11px', letterSpacing: '0.3em', color: '#8b3a2e', fontFamily: '"JetBrains Mono", monospace', marginBottom: '6px' },
+  title: { fontSize: '36px', fontWeight: 600, margin: 0, letterSpacing: '0.08em' },
+  subtitle: { fontSize: '13px', color: '#6b5a45', marginTop: '6px', fontFamily: '"Noto Sans JP", sans-serif' },
+  summaryBar: { display: 'flex', gap: '40px', marginBottom: '20px', padding: '16px 24px', background: '#fdfbf5', borderLeft: '3px solid #8b3a2e', borderRadius: '2px', fontFamily: '"Noto Sans JP", sans-serif' },
+  tableWrap: { background: '#fdfbf5', borderRadius: '2px', boxShadow: '0 2px 20px rgba(70, 50, 30, 0.08)', overflowX: 'auto' },
+  th: { padding: '14px 6px', textAlign: 'center', fontFamily: '"JetBrains Mono", monospace', fontSize: '11px', fontWeight: 500, letterSpacing: '0.05em' },
+  itemCell: { padding: '14px 18px', verticalAlign: 'middle' },
+  cellBtn: { width: '100%', minHeight: '52px', padding: '6px 4px', borderRadius: '3px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Shippori Mincho", serif' },
+  totalCell: { padding: '10px 8px', textAlign: 'center', fontFamily: '"Shippori Mincho", serif', fontSize: '14px', fontWeight: 700, color: '#8b3a2e', background: '#f5efe0' },
+  primaryBtn: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: '#8b3a2e', color: '#fdfbf5', border: 'none', borderRadius: '3px', cursor: 'pointer', fontFamily: '"Shippori Mincho", serif', fontSize: '13px', fontWeight: 500, letterSpacing: '0.05em' },
+  secondaryBtn: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'transparent', color: '#6b5a45', border: '1px solid #d5c9a8', borderRadius: '3px', cursor: 'pointer', fontFamily: '"Shippori Mincho", serif', fontSize: '13px' },
+  iconBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', padding: 0, background: 'transparent', border: 'none', borderRadius: '3px', cursor: 'pointer', color: '#8b7a5a' },
+  amountInput: { flex: 1, padding: '12px 14px', fontSize: '20px', border: '1px solid #d5c9a8', borderRadius: '3px', background: '#fdfbf5', fontFamily: '"JetBrains Mono", monospace', color: '#2b2620', transition: 'border-color 0.15s ease' },
+  footer: { marginTop: '32px', textAlign: 'center', fontSize: '11px', color: '#8b7a5a', fontFamily: '"JetBrains Mono", monospace', letterSpacing: '0.2em' }
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<PaymentTracker />);
+</script>
+
+</body>
+</html>
